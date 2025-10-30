@@ -1,288 +1,129 @@
 
-# 3D-CNN Zeolite Solvation
+# 3D-CNN for Zeolite Solvation Prediction
 
-**Predicting Solvation Thermodynamics of Adsorbates in Zeolite Pores Using 3D Convolutional Neural Networks**
+**Predicting Adsorbate–Solvent Interaction Energies in Zeolite Nanopores Using 3D Convolutional Neural Networks**
 
 <p align="center">
-  <img src="figure_1.png" width="800" alt="TOC Figure">
+  <img src="figure_1.png" width="800" alt="Graphical Abstract">
 </p>
 
 ---
 
-## 📘 Overview
+## Overview
 
-This repository contains the data processing scripts, voxelization utilities, and deep learning models developed for predicting **adsorbate–solvent interaction energies** in zeolite pores using **3D Convolutional Neural Networks (3D-CNNs)** with attention mechanisms.
+This repository contains code and models for predicting **adsorbate–solvent interaction energies (ΔE<sub>int</sub>)** in zeolite nanopores using **3D Convolutional Neural Networks** with attention mechanisms.
 
-The workflow integrates **classical molecular dynamics (MD)** sampling, **density functional theory (DFT)** single-point energy calculations, and **deep learning–based regression** to efficiently reproduce solvation thermodynamic properties that would otherwise require extensive first-principles computations.
+Our approach combines:
+- **Molecular Dynamics (MD)** sampling for structural configurations
+- **Density Functional Theory (DFT)** for reference energy calculations
+- **3D-CNN with attention** for fast, accurate energy prediction
+
+By learning from 3D voxelized representations of MD snapshots, our model achieves **DFT-level accuracy** while reducing computational cost by orders of magnitude—enabling high-throughput screening of solvation thermodynamics in confined environments.
+
+### Key Features
+✅ **DFT-level accuracy**: MAE < 0.05 eV for ensemble predictions  
+✅ **Strong generalization**: R² > 0.90 across unseen adsorbates and solvent compositions  
+✅ **Physically interpretable**: Attention maps reveal chemically meaningful interaction sites  
+✅ **Efficient surrogate**: Replaces expensive DFT calculations for screening studies
 
 ---
 
-## 🧪 Background
+## Background
 
-Understanding solvation thermodynamics in confined environments such as **zeolite nanopores** is crucial for modeling liquid-phase catalysis.  
-Our approach builds upon the *Multiscale Sampling (MSS)* framework originally developed in **Chen et al., J. Phys. Chem. C 2024, 128, 19367–19379**, which combined MD and DFT calculations to evaluate solvation free energies of C₁–C₃ oxygenates in hydrophilic and hydrophobic Ti-FAU zeolite pores.
+Understanding solvation thermodynamics in confined nanoporous environments is critical for modeling liquid-phase catalysis in zeolites. Traditional approaches require extensive DFT calculations, making large-scale screening computationally prohibitive.
 
-This project extends that framework by introducing a **data-driven 3D deep learning model** that predicts adsorbate–solvent interaction energies directly from MD snapshots, eliminating the need for DFT evaluations in large-scale screening studies.
+This work builds on the **Multiscale Sampling (MSS) framework** ([Chen et al., *J. Phys. Chem. C* 2024, 128, 19367](https://doi.org/10.1021/acs.jpcc.4c05344)), which combined MD and DFT to evaluate solvation free energies of C₁–C₃ oxygenates in Ti-FAU zeolite pores. We extend this by introducing a **data-driven 3D-CNN surrogate model** that predicts interaction energies directly from MD snapshots.
 
 ---
 
-## 🧰 Repository Structure
+## Methodology
+
+### Dataset
+- **80 adsorbate–environment combinations**  
+  C₁–C₃ oxygenates in hydrophilic/hydrophobic Ti-FAU pores with water and water–methanol solvents
+- **800 MD snapshots** (10 per system)  
+  Each labeled with DFT-calculated ΔE<sub>int</sub>
+- **19,200 training samples**  
+  24 rotational augmentations per snapshot
+
+### 3D Voxelization
+MD snapshots → **20×20×20 voxel grids** (0.8 Å resolution)
+- **28 feature channels**: 14 for adsorbate, 14 for solvent  
+  (element types, charges, masses, LJ parameters, H-bond indicators)
+- Centered on adsorbate center of mass
+- Zeolite framework excluded (implicit environment)
+
+### Neural Network
+**Dual-branch 3D-CNN with CBAM attention**
+- Separate adsorbate/solvent processing pathways
+- Channel & spatial attention for interpretability
+- Residual blocks with progressive downsampling (20³ → 10³ → 5³)
+- Trained with MSE loss, Adam optimizer (lr=2×10⁻⁴), 200 epochs
+
+---
+
+## Model Performance
+
+| Evaluation Scenario | MAE (eV) | RMSE (eV) | R² |
+|---------------------|----------|-----------|-----|
+| **Unseen adsorbates** (snapshot-level) | 0.083 | 0.110 | 0.82 |
+| **Unseen adsorbates** (ensemble avg.) | 0.037 | 0.047 | 0.95 |
+| **New solvent mixtures** (ensemble avg.) | 0.036 | 0.048 | 0.94 |
+| **Different pore types** (ensemble avg.) | 0.059 | 0.071 | 0.89 |
+
+*Ensemble predictions average over 10 snapshots per adsorbate*
+
+### Attention Visualization
+<p align="center">
+  <img src="results/attention_heatmaps/example_attention.png" width="600" alt="Attention maps highlight adsorbate–solvent interfacial regions">
+</p>
+
+Attention heatmaps demonstrate that the model learns physically meaningful features, focusing on hydrogen bonding sites and polar interaction zones.
+
+---
+
+## Repository Structure
 
 ```
 3dcnn-zeolite-solvation/
-├── data/
-│   ├── raw/                    # Raw MD trajectories and DFT reference energies
-│   ├── voxels/                 # Processed 3D voxel grids (HDF5 format)
-│   └── splits/                 # Train/validation/test split indices
-├── src/
-│   ├── voxelization/          # MD snapshot → voxel grid conversion
-│   ├── models/                # 3D-CNN architecture with attention modules
-│   ├── training/              # Training loops and optimization
-│   └── evaluation/            # Model evaluation and metrics
-├── scripts/
-│   ├── preprocess_data.py     # Data preprocessing pipeline
-│   ├── train_3dcnn_model.py   # Model training script
-│   └── evaluate_model.py      # Model evaluation and visualization
-├── notebooks/
-│   └── analysis.ipynb         # Exploratory data analysis and results
-├── results/
-│   ├── models/                # Trained model checkpoints
-│   ├── attention_heatmaps/    # Attention visualization outputs
-│   └── predictions/           # Model predictions on test sets
-├── requirements.txt           # Python dependencies
-└── README.md                  # This file
+├── python_scripts/         # Data processing and model training scripts
+├── database/               # Raw MD trajectories and DFT energies
+├── output_model_cnn/       # Trained models and checkpoints
+├── output_figures/         # Visualization outputs
+├── md_simulations/         # MD simulation input files
+└── figure_1.png           # Graphical abstract
 ```
 
 ---
 
-## 🧩 Methodology
+## Installation
 
-### 1. Dataset Generation
-- **Systems:** 80 unique *adsorbate–environment* combinations
-  - Adsorbates: C₁–C₃ oxygenates (alcohols, aldehydes, ketones, acids, esters)
-  - Environments: Hydrophilic/hydrophobic Ti-FAU zeolite pores
-  - Solvents: Pure water and water–methanol mixtures
-- **Snapshots:** 10 MD snapshots per system (800 total)
-  - Each snapshot labeled with DFT-calculated adsorbate–solvent interaction energy (ΔE<sub>int</sub>)
-- **Augmentation:** 24 symmetry rotations per snapshot → **19,200 total training samples**
-
-### 2. Voxelization
-Each MD snapshot is converted into a **20×20×20 voxel grid** (0.8 Å resolution, 16 Å × 16 Å × 16 Å total size) centered on the adsorbate's center of mass.
-
-**Feature Engineering:**
-- **28 feature channels** organized in dual-branch architecture:
-  - Channels 1–14: Adsorbate features (solvent positions = 0)
-  - Channels 15–28: Solvent features (adsorbate positions = 0)
-- **14 atomic features per branch:**
-  - Element one-hot encoding (C, H, O)
-  - Atomic mass
-  - Partial charge
-  - Lennard-Jones parameters (σ, ε)
-  - Hydrogen bonding indicators
-  - Coordination features
-- **Zeolite framework excluded** (fixed during MD, treated as implicit environment)
-- Implemented with **MDAnalysis** and **NumPy**
-
-### 3. Neural Network Architecture
-A **dual-branch 3D CNN** with **Convolutional Block Attention Modules (CBAM)** learns correlations between adsorbate and solvent voxel features.
-
-**Key Architecture Features:**
-- 🔀 **Dual Processing Branches**
-  - Separate convolutional pathways for adsorbate (channels 1–14) and solvent (channels 15–28)
-  - Independent feature extraction before interaction modeling
-  
-- 🎯 **Attention Mechanisms**
-  - **Channel Attention**: Emphasizes informative feature channels (e.g., charge, H-bonding)
-  - **Spatial Attention**: Focuses on critical interfacial regions between adsorbate and solvent
-  - **Group-Aware Interaction Layer**: Explicitly models adsorbate–solvent coupling
-  
-- 🏗️ **Residual CNN Backbone**
-  - Hierarchical spatial feature extraction with skip connections
-  - Progressive downsampling: 20³ → 10³ → 5³ voxels
-  - Batch normalization and dropout for regularization
-  
-- 📊 **Regression Head**
-  - Global average pooling + fully connected layers
-  - Output: Single scalar value (ΔE<sub>int</sub> prediction)
-
-**Training Details:**
-- Loss function: Mean Squared Error (MSE)
-- Optimizer: Adam (learning rate 2×10⁻⁴)
-- Batch size: 32
-- Epochs: 200 with early stopping (patience = 20)
-- Hardware: NVIDIA A100 GPU
-
----
-
-## 📊 Model Performance
-
-### Evaluation Metrics
-
-We evaluate the model under three generalization scenarios using different data splitting strategies:
-
-| Split Type | Description | MAE (eV) | RMSE (eV) | R² |
-|------------|-------------|----------|-----------|-----|
-| **Adsorbate-based** | Train on 70 adsorbates, test on 10 unseen adsorbates | | | |
-| ↳ Snapshot-level ΔE<sub>int</sub> | Individual MD snapshot predictions | 0.083 | 0.110 | 0.82 |
-| ↳ Ensemble ⟨ΔE<sub>int</sub>⟩ | Averaged over 10 snapshots per adsorbate | 0.037 | 0.047 | 0.95 |
-| **Solvent-based** | Train on pure water, test on water–methanol mixtures | | | |
-| ↳ Ensemble ⟨ΔE<sub>int</sub>⟩ | Averaged predictions | 0.036 | 0.048 | 0.94 |
-| **Pore-type-based** | Train on hydrophilic, test on hydrophobic (or vice versa) | | | |
-| ↳ Ensemble ⟨ΔE<sub>int</sub>⟩ | Averaged predictions | 0.059 | 0.071 | 0.89 |
-
-### Key Findings
-
-✅ **DFT-Level Accuracy**: Ensemble-averaged predictions achieve MAE < 0.05 eV, meeting chemical accuracy requirements  
-✅ **High Variance Explained**: R² > 0.90 for all averaged predictions, indicating strong generalization  
-✅ **Robust Transferability**: Model generalizes well to unseen adsorbates and solvent compositions  
-✅ **Physically Interpretable**: Attention maps highlight chemically meaningful spatial regions (see below)
-
-Performance meets **DFT-level accuracy (<0.1 eV)** with **>90% variance explained** for ensemble-averaged predictions, validating the use of 3D-CNN models as surrogate for expensive DFT calculations.
-
----
-
-## 🔍 Visualization & Interpretability
-
-### Attention Heatmap Analysis
-
-The CBAM attention mechanism provides insight into which spatial regions the model considers most important for predicting adsorbate–solvent interactions.
-
-<p align="center">
-  <img src="results/attention_heatmaps/example_attention.png" width="700" alt="Attention Heatmap Visualization">
-</p>
-
-**Key Observations:**
-- 🎯 High attention values concentrated at **adsorbate–solvent interfacial regions**
-- 💧 Model identifies hydrogen bonding sites and polar interaction zones
-- 🧪 Attention patterns align with physical intuition from DFT analyses
-- 📐 Spatial focus shifts based on adsorbate functional groups (e.g., hydroxyl vs. carbonyl)
-
-This validates that the model learns **chemically meaningful representations** rather than spurious correlations.
-
----
-
-## ⚙️ Installation & Setup
-
-### Prerequisites
-- Python ≥ 3.9
-- CUDA-compatible GPU (recommended for training)
-- Git LFS (for large data files)
-
-### Installation
-
-1. **Clone the repository:**
 ```bash
 git clone https://github.com/getman-research-group/3dcnn-zeolite-solvation.git
 cd 3dcnn-zeolite-solvation
-```
-
-2. **Create a conda environment:**
-```bash
-conda create -n zeolite-3dcnn python=3.9
-conda activate zeolite-3dcnn
-```
-
-3. **Install dependencies:**
-```bash
 pip install -r requirements.txt
 ```
 
-### Core Dependencies
-- **Deep Learning**: PyTorch ≥ 2.0, TorchVision
-- **Molecular Analysis**: MDAnalysis ≥ 2.6
-- **Scientific Computing**: NumPy, SciPy, scikit-learn
-- **Visualization**: Matplotlib, Seaborn, Plotly
-- **Utilities**: tqdm, h5py, PyYAML
-
-See `requirements.txt` for complete list with version specifications.
+**Core dependencies:** PyTorch, MDAnalysis, NumPy, SciPy, scikit-learn, Matplotlib
 
 ---
 
-## 🚀 Usage
+## Citation
 
-### 1. Data Preprocessing
-
-Convert raw MD trajectories to voxel grids:
-
-```bash
-python scripts/preprocess_data.py \
-    --input_dir ./data/raw/ \
-    --output_dir ./data/voxels/ \
-    --grid_size 20 \
-    --resolution 0.8 \
-    --n_features 14 \
-    --augment_rotations 24
-```
-
-### 2. Model Training
-
-Train the 3D-CNN model:
-
-```bash
-python scripts/train_3dcnn_model.py \
-    --data_dir ./data/voxels/ \
-    --split_type adsorbate \
-    --epochs 200 \
-    --batch_size 32 \
-    --learning_rate 2e-4 \
-    --device cuda \
-    --checkpoint_dir ./results/models/
-```
-
-**Split types:**
-- `adsorbate`: Test on unseen adsorbates
-- `solvent`: Test on different solvent compositions
-- `pore_type`: Test on different zeolite environments
-
-### 3. Model Evaluation
-
-Evaluate trained model and generate visualizations:
-
-```bash
-python scripts/evaluate_model.py \
-    --model_path ./results/models/best_model.pth \
-    --test_data ./data/voxels/test.h5 \
-    --output_dir ./results/predictions/ \
-    --visualize_attention
-```
-
-### 4. Interactive Analysis
-
-Explore results in Jupyter notebooks:
-
-```bash
-jupyter notebook notebooks/analysis.ipynb
-```
-
----
-
-## 📈 Results & Outputs
-
-After training and evaluation, the following outputs are generated:
-
-- **Model Checkpoints**: `results/models/best_model.pth`
-- **Prediction CSV**: `results/predictions/test_predictions.csv`
-- **Performance Metrics**: `results/predictions/metrics.json`
-- **Attention Heatmaps**: `results/attention_heatmaps/*.png`
-- **Training Curves**: `results/models/training_history.png`
-
----
-
-## 🔬 Citation
-
-If you use this code or data in your research, please cite:
+If you use this work, please cite:
 
 ```bibtex
 @article{zeolite3dcnn2025,
-  title={Predicting Solvation Thermodynamics of Adsorbates in Zeolite Pores Using 3D Convolutional Neural Networks},
-  author={[Your Name] and [Coauthors]},
-  journal={[Journal Name]},
+  title={Predicting Adsorbate–Solvent Interaction Energies in Zeolite Nanopores 
+         Using 3D Convolutional Neural Networks},
+  author={[Authors]},
+  journal={[Journal]},
   year={2025},
   note={In preparation}
 }
 ```
 
-**Related Work:**
+**Related work:**
 ```bibtex
 @article{chen2024multiscale,
   title={Multiscale Sampling of Solvation Free Energies in Confined Environments},
@@ -297,36 +138,21 @@ If you use this code or data in your research, please cite:
 
 ---
 
-## 👥 Contributors
+## License
 
-This project was developed by the **Getman Research Group** at The Ohio State University.
-
-**Principal Investigator**: Prof. Rachel B. Getman  
-**Lead Developer**: [Your Name]
-
-For questions or collaborations, please open an issue or contact us at [email].
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🧾 License
+## Contact
 
-This project is released under the **MIT License**.  
-See the [LICENSE](LICENSE) file for details.
+**Getman Research Group**  
+The Ohio State University
 
----
-
-## 🙏 Acknowledgments
-
-- **Computational Resources**: Ohio Supercomputer Center (OSC)
-- **Funding**: [Funding sources]
-- **Software**: MDAnalysis, PyTorch, RDKit communities
+For questions, please open an issue or contact: [getman.11@osu.edu](mailto:getman.11@osu.edu)
 
 ---
 
 <p align="center">
-  <b>© 2025 Getman Research Group – The Ohio State University</b>
-</p>
-
-<p align="center">
-  <a href="https://github.com/getman-research-group/3dcnn-zeolite-solvation">🌟 Star this repository if you find it useful!</a>
+  <i>© 2025 Getman Research Group – The Ohio State University</i>
 </p>
