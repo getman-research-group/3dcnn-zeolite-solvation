@@ -1,0 +1,96 @@
+intE01.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 24
+5305488.pbs02
+5305489.pbs02
+intE02.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 24
+5305490.pbs02
+5305491.pbs02
+intE03.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 20
+5305492.pbs02
+5305493.pbs02
+intE04.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 23
+5305494.pbs02
+5305495.pbs02
+intE05.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 22
+5305498.pbs02
+5305499.pbs02
+intE06.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 24
+5305502.pbs02
+5305503.pbs02
+intE07.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 23
+5305505.pbs02
+5305506.pbs02
+intE08.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 23
+5305507.pbs02
+5305508.pbs02
+intE09.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 25
+5305509.pbs02
+5305510.pbs02
+intE10.traj
+adsorbate mass center coords: [8.08, 14.91, 20.33]
+Number of water molecules in cutoff 7 is 26
+5305511.pbs02
+5305512.pbs02
+  
+intE01/aq -7434.1972708052
+intE01/aq_zeo -7410.075154520623983
+intE01/g_sp -7020.592441549773866
+ 
+intE02/aq -7434.1755124454
+intE02/aq_zeo -7410.051181553015340
+intE02/g_sp -7020.592619888121590
+ 
+intE03/aq -7365.2448523420
+intE03/aq_zeo -7341.121490451454520
+intE03/g_sp -7020.592830084834532
+ 
+intE04/aq -7416.9566943957
+intE04/aq_zeo -7392.824204131501574
+intE04/g_sp -7020.592452903718367
+ 
+intE05/aq -7399.7111238688
+intE05/aq_zeo -7375.588673153814852
+intE05/g_sp -7020.592987153838294
+ 
+intE06/aq -7434.2028887206
+intE06/aq_zeo -7410.082559109034264
+intE06/g_sp -7020.592302795736941
+ 
+intE07/aq -7416.9461740881
+intE07/aq_zeo -7392.820117931577443
+intE07/g_sp -7020.592417116409706
+ 
+intE08/aq -7416.9737724612
+intE08/aq_zeo -7392.849536572467514
+intE08/g_sp -7020.592286785632496
+ 
+intE09/aq -7451.4428518612
+intE09/aq_zeo -7427.319969338567716
+intE09/g_sp -7020.592131315134793
+ 
+intE10/aq -7468.6626512267
+intE10/aq_zeo -7444.537288491787876
+intE10/g_sp -7020.592521838813809
+ 
+[-0.588, -0.643, -0.611, -0.87, -0.582, -0.543, -0.696, -0.65, -0.617, -0.674]
+intE_dft: -0.6474 
+00_intE_zeo -6996.476289611834545
+[-0.162, -0.218, -0.186, -0.444, -0.157, -0.117, -0.27, -0.224, -0.192, -0.248]
+intE_dft: -0.2218

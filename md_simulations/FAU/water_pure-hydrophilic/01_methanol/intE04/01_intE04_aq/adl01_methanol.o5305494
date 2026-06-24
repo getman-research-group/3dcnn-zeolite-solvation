@@ -1,0 +1,180 @@
+
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+ STARTING THE CALCULATION!
+
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+Job Id: 5305494.pbs02
+    Job_Name = adl01_methanol
+    Job_Owner = xiutinc@login001.palmetto.clemson.edu
+    resources_used.cpupercent = 0
+    resources_used.cput = 00:00:00
+    resources_used.mem = 0b
+    resources_used.ncpus = 24
+    resources_used.vmem = 9792kb
+    resources_used.walltime = 00:00:00
+    job_state = R
+    queue = c2_fdr_single
+    server = pbs02
+    Checkpoint = u
+    ctime = Tue Jul  5 19:05:31 2022
+    Error_Path = login001.palmetto.clemson.edu:/zfs/curium/xiutinc/zeolite/FAU/
+	intE_dft_one_unitcell/01_methanol/intE04/01_intE04_aq/adl01_methanol.e5
+	305494
+    exec_host = node0693/0*24
+    exec_vnode = (node0693:ncpus=24:mem=125829120kb:ngpus=0)
+    Hold_Types = n
+    Join_Path = oe
+    Keep_Files = n
+    Mail_Points = n
+    Mail_Users = xiutinc@g.clemson.edu
+    mtime = Tue Jul  5 19:05:35 2022
+    Output_Path = login001.palmetto.clemson.edu:/zfs/curium/xiutinc/zeolite/FAU
+	/intE_dft_one_unitcell/01_methanol/intE04/01_intE04_aq/adl01_methanol.o
+	5305494
+    Priority = 0
+    qtime = Tue Jul  5 19:05:31 2022
+    Rerunable = True
+    Resource_List.mem = 120gb
+    Resource_List.mpiprocs = 24
+    Resource_List.ncpus = 24
+    Resource_List.ngpus = 0
+    Resource_List.nodect = 1
+    Resource_List.place = free:shared
+    Resource_List.qcat = fdr_qcat
+    Resource_List.select = 1:ncpus=24:mpiprocs=24:mem=120gb:interconnect=fdr
+    Resource_List.walltime = 72:00:00
+    stime = Tue Jul  5 19:05:34 2022
+    session_id = 1161380
+    jobdir = /home/xiutinc
+    substate = 42
+    Variable_List = PBS_O_HOME=/home/xiutinc,PBS_O_LANG=en_US.UTF-8,
+	PBS_O_LOGNAME=xiutinc,
+	PBS_O_PATH=/home/xiutinc/.conda/envs/ASE_3_6/bin:/software/spackages/l
+	inux-centos8-x86_64/gcc-8.3.1/anaconda3-5.1.0-c3p5et4cpo7jaiahacqa3pqwh
+	op7tiik/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/pbs/
+	default/bin:/opt/puppetlabs/bin:/opt/dell/srvadmin/bin:/home/xiutinc/.l
+	ocal/bin:/home/xiutinc/bin,PBS_O_MAIL=/var/spool/mail/xiutinc,
+	PBS_O_SHELL=/bin/bash,
+	PBS_O_WORKDIR=/zfs/curium/xiutinc/zeolite/FAU/intE_dft_one_unitcell/01
+	_methanol/intE04/01_intE04_aq,PBS_O_SYSTEM=Linux,
+	PBS_O_QUEUE=c2_fdr_workq,PBS_O_HOST=login001.palmetto.clemson.edu
+    comment = Job run at Tue Jul 05 at 19:05 on (node0693:ncpus=24:mem=12582912
+	0kb:ngpus=0)
+    etime = Tue Jul  5 19:05:31 2022
+    run_count = 1
+    eligible_time = 00:00:00
+    Submit_arguments = sub_aq.sh
+    project = _pbs_project_default
+    Submit_Host = login001.palmetto.clemson.edu
+
+
+Currently Loaded Modules:
+  1) openmpi/4.0.4-gcc/8.3.1-ucx   4) fftw/3.3.8-gcc/8.3.1-mpi
+  2) openblas/0.3.10-gcc/8.3.1     5) cp2k/7.1-gcc/8.3.1-mpi
+  3) gmp/6.1.2-gcc/8.3.1
+
+ 
+
+ HINT in environment.F:814 The compiler target flags (x86_avx) used to build
+   this binary cannot exploit all extensions of this CPU model (x86_avx2).
+   Consider compiler target flags as part of FCFLAGS and CFLAGS (ARCH file).
+[1657071171.016416] [node0693:1161642:0]          mpool.c:43   UCX  WARN  object 0x48c9800 was not returned to mpool ucp_requests
+[1657071171.019018] [node0693:1161644:0]          mpool.c:43   UCX  WARN  object 0x3698580 was not returned to mpool ucp_requests
+[1657071171.019093] [node0693:1161645:0]          mpool.c:43   UCX  WARN  object 0x5050ec0 was not returned to mpool ucp_requests
+[1657071171.019137] [node0693:1161641:0]          mpool.c:43   UCX  WARN  object 0x4e22300 was not returned to mpool ucp_requests
+[1657071171.019884] [node0693:1161639:0]          mpool.c:43   UCX  WARN  object 0x3a10d00 was not returned to mpool ucp_requests
+[1657071171.020013] [node0693:1161643:0]          mpool.c:43   UCX  WARN  object 0x36337c0 was not returned to mpool ucp_requests
+[1657071171.020369] [node0693:1161647:0]          mpool.c:43   UCX  WARN  object 0x3ab5b40 was not returned to mpool ucp_requests
+[1657071171.020941] [node0693:1161646:0]          mpool.c:43   UCX  WARN  object 0x51357c0 was not returned to mpool ucp_requests
+[1657071171.021399] [node0693:1161638:0]          mpool.c:43   UCX  WARN  object 0x51a97c0 was not returned to mpool ucp_requests
+./intE04_aq-pos-1
+/var/spool/pbs/mom_priv/jobs/5305494.pbs02.SC: line 79: ENDING: command not found
+
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+ ENDING THE VALENCE DENSITY CALCULATION!
+
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+Job Id: 5305494.pbs02
+    Job_Name = adl01_methanol
+    Job_Owner = xiutinc@login001.palmetto.clemson.edu
+    resources_used.cpupercent = 2349
+    resources_used.cput = 57:29:34
+    resources_used.mem = 18665696kb
+    resources_used.ncpus = 24
+    resources_used.vmem = 32439516kb
+    resources_used.walltime = 02:26:48
+    job_state = R
+    queue = c2_fdr_single
+    server = pbs02
+    Checkpoint = u
+    ctime = Tue Jul  5 19:05:31 2022
+    Error_Path = login001.palmetto.clemson.edu:/zfs/curium/xiutinc/zeolite/FAU/
+	intE_dft_one_unitcell/01_methanol/intE04/01_intE04_aq/adl01_methanol.e5
+	305494
+    exec_host = node0693/0*24
+    exec_vnode = (node0693:ncpus=24:mem=125829120kb:ngpus=0)
+    Hold_Types = n
+    Join_Path = oe
+    Keep_Files = n
+    Mail_Points = n
+    Mail_Users = xiutinc@g.clemson.edu
+    mtime = Tue Jul  5 21:32:23 2022
+    Output_Path = login001.palmetto.clemson.edu:/zfs/curium/xiutinc/zeolite/FAU
+	/intE_dft_one_unitcell/01_methanol/intE04/01_intE04_aq/adl01_methanol.o
+	5305494
+    Priority = 0
+    qtime = Tue Jul  5 19:05:31 2022
+    Rerunable = True
+    Resource_List.mem = 120gb
+    Resource_List.mpiprocs = 24
+    Resource_List.ncpus = 24
+    Resource_List.ngpus = 0
+    Resource_List.nodect = 1
+    Resource_List.place = free:shared
+    Resource_List.qcat = fdr_qcat
+    Resource_List.select = 1:ncpus=24:mpiprocs=24:mem=120gb:interconnect=fdr
+    Resource_List.walltime = 72:00:00
+    stime = Tue Jul  5 19:05:34 2022
+    session_id = 1161380
+    jobdir = /home/xiutinc
+    substate = 42
+    Variable_List = PBS_O_HOME=/home/xiutinc,PBS_O_LANG=en_US.UTF-8,
+	PBS_O_LOGNAME=xiutinc,
+	PBS_O_PATH=/home/xiutinc/.conda/envs/ASE_3_6/bin:/software/spackages/l
+	inux-centos8-x86_64/gcc-8.3.1/anaconda3-5.1.0-c3p5et4cpo7jaiahacqa3pqwh
+	op7tiik/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/pbs/
+	default/bin:/opt/puppetlabs/bin:/opt/dell/srvadmin/bin:/home/xiutinc/.l
+	ocal/bin:/home/xiutinc/bin,PBS_O_MAIL=/var/spool/mail/xiutinc,
+	PBS_O_SHELL=/bin/bash,
+	PBS_O_WORKDIR=/zfs/curium/xiutinc/zeolite/FAU/intE_dft_one_unitcell/01
+	_methanol/intE04/01_intE04_aq,PBS_O_SYSTEM=Linux,
+	PBS_O_QUEUE=c2_fdr_workq,PBS_O_HOST=login001.palmetto.clemson.edu
+    comment = Job run at Tue Jul 05 at 19:05 on (node0693:ncpus=24:mem=12582912
+	0kb:ngpus=0)
+    etime = Tue Jul  5 19:05:31 2022
+    run_count = 1
+    eligible_time = 00:00:00
+    Submit_arguments = sub_aq.sh
+    project = _pbs_project_default
+    Submit_Host = login001.palmetto.clemson.edu
+
+ 
+ 
++------------------------------------------+ 
+| PALMETTO CLUSTER PBS RESOURCES REQUESTED | 
++------------------------------------------+ 
+ 
+mem=120gb,walltime=72:00:00,ncpus=24
+ 
+ 
++-------------------------------------+ 
+| PALMETTO CLUSTER PBS RESOURCES USED | 
++-------------------------------------+ 
+ 
+cput=58:26:01,mem=18665696kb,walltime=02:27:17,ncpus=24,cpupercent=2374,vmem=32439516kb
+ 
+ 
