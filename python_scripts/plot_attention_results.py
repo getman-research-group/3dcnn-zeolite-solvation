@@ -39,8 +39,8 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
 # Import your modules - Updated for dual-branch architecture
-from model_3d_cnn_2_8 import AttentionCNN_2_8
-from train_3d_cnn_2_8 import VoxelDataset, CNN3DTrainer
+from model_3d_cnn import AttentionCNN_2_8
+from train_3d_cnn import VoxelDataset, CNN3DTrainer
 from core.path import get_paths
 from core.global_vars import ZEOLITE_TYPES, ADSORBATES_BY_ENV
 
