@@ -18,9 +18,9 @@ import numpy as np
 import warnings
 
 # Import custom modules for type_2 format
-from generate_voxel_grids_type_2 import GenerateVoxelGrids
-from augment_voxel_grids_type_2 import augment_voxel_grid, check_augment_grids
-from augment_voxel_grids_type_2 import CUBE_ROTATION_SEQUENCES
+from generate_voxel_grids import GenerateVoxelGrids
+from augment_voxel_grids import augment_voxel_grid, check_augment_grids
+from augment_voxel_grids import CUBE_ROTATION_SEQUENCES
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.path import get_paths

@@ -17,7 +17,7 @@ Functions:
 """
 
 import numpy as np
-from generate_voxel_grids_type_2 import GenerateVoxelGrids
+from generate_voxel_grids import GenerateVoxelGrids
 import sys
 import os
 # Add the parent directory to sys.path to access core modules
