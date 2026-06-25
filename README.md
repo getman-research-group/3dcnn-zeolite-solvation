@@ -4,9 +4,11 @@ This repository accompanies the manuscript:
 
 **Predicting Solvation Thermodynamics of Adsorbates in Zeolite Pores Using Convolutional Neural Networks with Attention Mechanisms**
 
-The repository contains the data, scripts, trained models, example molecular simulation files, and generated figures used to support the manuscript. The workflow uses molecular dynamics (MD) snapshots of adsorbates in Ti-FAU zeolite pores, converts local adsorbate-solvent configurations into voxel-grid inputs, and trains attention-enhanced three-dimensional convolutional neural networks to predict DFT-derived adsorbate-solvent interaction energies.
+The repository contains the data, scripts, trained models, example molecular simulation files, and generated figures used to support the manuscript.
 
 ![Workflow overview](overall_workflow.png)
+
+**Figure: Overall workflow for predicting adsorbate-solvent interaction energies in Ti-FAU zeolite pores.** Molecular dynamics (MD) snapshots are converted into voxel-grid representations of local adsorbate-solvent configurations, which are then used to train attention-enhanced three-dimensional convolutional neural networks to predict DFT-derived interaction energies.
 
 ## Repository Contents
 
@@ -18,7 +20,7 @@ The repository contains the data, scripts, trained models, example molecular sim
 ├── output_model_cnn/        # Trained model checkpoints and training records
 ├── output_figures/          # Figures and visualization outputs generated from the analysis
 ├── md_simulations/          # Representative MD and DFT input/output files
-├── figure_1.png             # Workflow overview figure
+├── overall_workflow.png     # Workflow overview figure
 ├── LICENSE
 └── README.md
 ```
