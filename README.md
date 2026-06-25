@@ -8,7 +8,7 @@ Jiexin Shi, Xiuting Chen, and Rachel B. Getman
 
 The repository contains the data, scripts, trained models, example molecular simulation files, and generated figures used to support the manuscript. The workflow uses molecular dynamics (MD) snapshots of adsorbates in Ti-FAU zeolite pores, converts local adsorbate-solvent configurations into voxel-grid inputs, and trains attention-enhanced three-dimensional convolutional neural networks to predict DFT-derived adsorbate-solvent interaction energies.
 
-![Workflow overview](figure_1.png)
+![Workflow overview](overall_workflow.png)
 
 ## Repository Contents
 
