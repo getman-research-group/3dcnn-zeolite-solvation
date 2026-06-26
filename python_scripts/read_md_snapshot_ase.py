@@ -738,7 +738,7 @@ if __name__ == "__main__":
     pore_type = 'hydrophilic'      # e.g. "hydrophilic", "hydrophobic"
     adsorbate = '04_04_glycerol'      # e.g. "01_methanol", "02_01_02_propanol"
     snapshot_index = 1
-                    
+    
     config_mda = UniverseASE(
                              zeolite_type = zeolite_type,
                              solvent_type = solvent_type,
