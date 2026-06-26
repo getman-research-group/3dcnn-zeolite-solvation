@@ -436,23 +436,23 @@ if __name__ == '__main__':
     # Plot distribution of interaction energy
     viz.plot_intE_distribution()
 
-    # # Plot boxplot of interaction energy by pore type
-    # viz.plot_boxplot_by_pore()
+    # Plot boxplot of interaction energy by pore type
+    viz.plot_boxplot_by_pore()
     
-    # # Plot violin plot of interaction energy by pore type
-    # viz.plot_violin_by_pore()
+    # Plot violin plot of interaction energy by pore type
+    viz.plot_violin_by_pore()
     
-    # # Plot KDE by pore type
-    # viz.plot_kde_by_pore()
+    # Plot KDE by pore type
+    viz.plot_kde_by_pore()
     
-    # # Plot Q-Q plot of intE
-    # viz.plot_qq_plot_intE()
+    # Plot Q-Q plot of intE
+    viz.plot_qq_plot_intE()
     
-    # # Plot scatter plot of intE vs intE_avg
-    # viz.plot_scatter_intE_vs_intE_avg()
+    # Plot scatter plot of intE vs intE_avg
+    viz.plot_scatter_intE_vs_intE_avg()
     
-    # # MD sampling characteristics
-    # viz.plot_md_sampling_analysis()
+    # MD sampling characteristics
+    viz.plot_md_sampling_analysis()
     
     # Print summary statistics for the paper
     print("\n" + "="*50)
