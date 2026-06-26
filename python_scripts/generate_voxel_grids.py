@@ -26,7 +26,7 @@ from typing import Optional
 ## Custom Functions
 from core.path import get_paths
 from core.global_vars import FEATURE_LIST, LABEL_CSV_FILES
-from read_md_snapshot_mdanalysis import snapshotMDAnalysis
+from read_md_snapshot import snapshotMDAnalysis
 from extract_lammpsdata_info import extract_LJ_parameter_info, extract_total_valence_info
 from extract_lammpsdata_info import extract_is_hydrophobic_info, extract_is_donor_acceptor
 from extract_hbonds import HydrogenBondDetector
