@@ -113,7 +113,6 @@ ADSORBATES_BY_ENV = {
                                 '04_05_glycerol',
                                 '04_06_glycerol',
                                 '05_3c_aldehyde',
-                                # '05_3c_aldehyde_wrong',  # wrong data, commented out
                                 '06_glycerol_intermediate',
                                 '07_ethanol',
                                 '08_01_ethene_glycol',
