@@ -15,7 +15,7 @@ from MDAnalysis import transformations
 from MDAnalysis.lib.distances import distance_array
 
 from core.path import get_paths
-from read_md_snapshot_mdanalysis import snapshotMDAnalysis
+from read_md_snapshot import snapshotMDAnalysis
 from core.global_vars import ZEOLITE_TYPES, ADSORBATES_BY_ENV
 
 # Suppress specific warnings at the beginning
