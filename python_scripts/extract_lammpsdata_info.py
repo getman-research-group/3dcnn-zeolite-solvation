@@ -8,7 +8,7 @@ from MDAnalysis.analysis import distances
 
 # Custom imports
 from core.path import get_paths
-from read_md_snapshot_mdanalysis import snapshotMDAnalysis
+from read_md_snapshot import snapshotMDAnalysis
 
 
 def _parse_solvent_composition(solvent_type):
