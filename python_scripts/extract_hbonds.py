@@ -591,9 +591,9 @@ if __name__ == "__main__":
     
     hbond_detector_mixed = HydrogenBondDetector(
         zeolite_type='FAU',
-        solvent_type='methanol_120_water_1080',
+        solvent_type='methanol_240_water_960',
         pore_type='hydrophilic',
-        adsorbate='11_01_propylene_glycol',
+        adsorbate='02_01_02_propanol',
         snapshot_index=1,
         d_a_cutoff=3.5,
         d_h_cutoff=1.0,
