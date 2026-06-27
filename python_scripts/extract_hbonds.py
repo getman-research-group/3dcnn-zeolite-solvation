@@ -132,8 +132,8 @@ class HydrogenBondDetector:
                  adsorbate: str = '03_01_1_3_propanediol',
                  snapshot_index: int = 1,
                  d_a_cutoff: float = 3.5,
-                 d_h_cutoff: float = 1.2,
-                 d_h_a_angle_cutoff: float = 130.0,
+                 d_h_cutoff: float = 1.0,
+                 d_h_a_angle_cutoff: float = 150.0,
                  verbose: bool = False):
         """Load and analyze one MD snapshot using the requested H-bond criteria."""
 
