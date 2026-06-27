@@ -1193,7 +1193,7 @@ if __name__ == "__main__":
     
     # Example configuration used by the optional checks below.
     zeolite_type = 'FAU'
-    solvent_type = 'methanol_240_water_960-hydrophilic'  # Test with mixed solvent
+    solvent_type = 'methanol_240_water_960'  # Test with mixed solvent
     pore_type = 'hydrophilic'
     adsorbate = '02_01_02_propanol'
     
@@ -1239,6 +1239,7 @@ if __name__ == "__main__":
     # Example 1: donor/acceptor capacity in a pure-water snapshot.
     print("\n--- Test 1: Pure Water System ---")
     solvent_type = 'water_pure'
+    adsorbate = '11_01_propylene_glycol'
     hbond_capacity_info = extract_is_donor_acceptor(zeolite_type,
                                            solvent_type,
                                            pore_type,
@@ -1249,7 +1250,8 @@ if __name__ == "__main__":
     
     # Example 2: donor/acceptor capacity in a methanol-water snapshot.
     print("\n--- Test 2: Mixed Solvent System ---")
-    solvent_type = 'methanol_120_water_1080'
+    solvent_type = 'methanol_240_water_960'
+    adsorbate = '02_01_02_propanol'
     hbond_capacity_info = extract_is_donor_acceptor(zeolite_type,
                                            solvent_type,
                                            pore_type,
@@ -1257,6 +1259,4 @@ if __name__ == "__main__":
                                            snapshot_index=1,
                                            r_cut=5.0,
                                            verbose=True)
-
-
 
