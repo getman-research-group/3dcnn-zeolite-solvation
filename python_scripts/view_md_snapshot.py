@@ -73,7 +73,7 @@ class UniverseASE:
         
         # Parse solvent composition
         if self.verbose:
-            print(f"\n--- Loading ASE object.")
+            print("\n--- Loading ASE object.")
             print(f"    Zeolite: {self.zeolite_type}")
             print(f"    Solvent: {self.solvent_type}")
             print(f"    Pore: {self.pore_type}")
@@ -109,7 +109,7 @@ class UniverseASE:
             self.methanol_mol_range = None
             self.has_methanol = False
             if self.verbose:
-                print(f"    Pure water system: Water mol_ids 1-1200")
+                print("    Pure water system: Water mol_ids 1-1200")
                 
         elif self.solvent_type == 'methanol_120_water_1080':
             # Mixed system: 1080 water + 120 methanol
@@ -117,7 +117,7 @@ class UniverseASE:
             self.methanol_mol_range = (1081, 1200)
             self.has_methanol = True
             if self.verbose:
-                print(f"    Mixed solvent system: Water mol_ids 1-1080, Methanol mol_ids 1081-1200")
+                print("    Mixed solvent system: Water mol_ids 1-1080, Methanol mol_ids 1081-1200")
                 
         elif self.solvent_type == 'methanol_240_water_960':
             # Mixed system: 960 water + 240 methanol  
@@ -125,7 +125,7 @@ class UniverseASE:
             self.methanol_mol_range = (961, 1200)
             self.has_methanol = True
             if self.verbose:
-                print(f"    Mixed solvent system: Water mol_ids 1-960, Methanol mol_ids 961-1200")
+                print("    Mixed solvent system: Water mol_ids 1-960, Methanol mol_ids 961-1200")
                 
         elif self.solvent_type == 'methanol_600_water_600':
             # Mixed system: 600 water + 600 methanol
@@ -133,7 +133,7 @@ class UniverseASE:
             self.methanol_mol_range = (601, 1200)
             self.has_methanol = True
             if self.verbose:
-                print(f"    Mixed solvent system: Water mol_ids 1-600, Methanol mol_ids 601-1200")
+                print("    Mixed solvent system: Water mol_ids 1-600, Methanol mol_ids 601-1200")
                 
         else:
             raise ValueError(f"Unsupported solvent_type: {self.solvent_type}. "
@@ -160,18 +160,6 @@ class UniverseASE:
         self.atoms_topology = read(self.path_lammpsdata, format='lammps-data')
         if self.verbose:
             print(f'--- Loading topology for {self.adsorbate} from {self.path_lammpsdata}')
-        
-        # # Test: Print available arrays in the topology
-        # print("Available arrays:", self.atoms_topology.arrays.keys())
-        # self.atoms_numbers = self.atoms_topology.arrays['numbers']
-        # self.atoms_positions = self.atoms_topology.arrays['positions']
-        # self.atoms_masses = self.atoms_topology.arrays['masses']
-        # self.atoms_id = self.atoms_topology.arrays['id']
-        # self.atoms_type = self.atoms_topology.arrays['type']
-        # self.atoms_mol_id = self.atoms_topology.arrays['mol-id']
-        # self.atoms_initial_charges = self.atoms_topology.arrays['initial_charges']
-        # self.atoms_mmcharges = self.atoms_topology.arrays['mmcharges']
-        
         
         # Construct dump path
         sub = f"intE{index:02d}"
@@ -200,7 +188,7 @@ class UniverseASE:
         """
         Print atom counts, molecular composition, and simulation-cell details.
         """
-        print(f"\n=== System Information ===")
+        print("\n=== System Information ===")
         
         # Basic counts
         total_atoms = len(atoms)
@@ -234,7 +222,7 @@ class UniverseASE:
                 methanol_molecules = len([mid for mid in unique_mol_ids if self.methanol_mol_range[0] <= mid <= self.methanol_mol_range[1]])
                 print(f"    Methanol: {methanol_molecules} molecules ({methanol_atoms} atoms)")
             else:
-                print(f"    Methanol: 0 molecules (0 atoms)")
+                print("    Methanol: 0 molecules (0 atoms)")
             
             # Count zeolite atoms
             zeolite_mask = (mol_ids == self.zeolite_mol_id)
@@ -267,11 +255,8 @@ class UniverseASE:
             - 'all': Show adsorbate + water + methanol + zeolite (default)
             - 'adsorbate_solvent': Show only adsorbate + water + methanol
             - 'adsorbate_zeolite': Show only adsorbate + zeolite framework
-            - 'adsorbate_water': Show only adsorbate + water  
             - 'adsorbate': Show only adsorbate
             - 'solvent': Show only water + methanol
-            - 'water': Show only water
-            - 'methanol': Show only methanol (if present)
             - 'zeolite': Show only zeolite
         center_on_adsorbate : bool
             If True, center the view on adsorbate center of mass
@@ -300,8 +285,7 @@ class UniverseASE:
             view(self.ase_atoms)
             return
         
-        # If view_raw is True, just view the entire raw system directly
-        # If view_raw is True, adjust z-box and center adsorbate COM in xyz
+        # Prepare the full-system view and adjust its position and z boundaries
         if view_raw:
             mol_ids = self.ase_atoms.arrays['mol-id']
             
@@ -317,17 +301,17 @@ class UniverseASE:
                 print(f"Original box z-dimension: {cell[2, 2]:.3f} Å")
                 print(f"Atom z range: {min_z:.3f} - {max_z:.3f} Å")
             
-            # Step 2: Adjust box - set bottom boundary slightly below lowest atom, top just above highest
+            # Step 2: Adjust the z dimension using the observed atomic coordinates
             new_cell = cell.copy()
             bottom_boundary = 0.4  # Set bottom at 0.3 Å as suggested
             top_boundary = max_z # Add 1 Å buffer above highest atom
             new_cell[2, 2] = top_boundary
             
-            # Step 3: Find adsorbate COM in all three dimensions
+            # Step 3: Find the adsorbate geometric center in all three dimensions
             adsorbate_mask = mol_ids == self.adsorbate_mol_id
             if np.any(adsorbate_mask):
                 adsorbate_indices = np.where(adsorbate_mask)[0]
-                adsorbate_com = np.mean(positions[adsorbate_indices], axis=0)  # COM in x, y, z
+                adsorbate_com = np.mean(positions[adsorbate_indices], axis=0)
                 
                 # Calculate target position (center of the box in all dimensions)
                 box_center = np.array([new_cell[0, 0], new_cell[1, 1], new_cell[2, 2]]) / 2.0
@@ -362,7 +346,7 @@ class UniverseASE:
                     zeolite_min_z = np.min(zeolite_positions[:, 2])
                     zeolite_max_z = np.max(zeolite_positions[:, 2])
                     
-                    # Extend boundaries by 10 Å above and below zeolite framework
+                    # Extend the boundaries by 1 Å above and below the zeolite framework
                     buffer_size = 1.0  # Å
                     extended_min_z = zeolite_min_z - buffer_size
                     extended_max_z = zeolite_max_z + buffer_size
@@ -765,7 +749,7 @@ class UniverseASE:
                     print("Falling back to view() only")
                 view(atoms_to_view)
         else:
-            # Just show the visualization
+            # Open the interactive ASE viewer; rotation applies only to saved plots
             view(atoms_to_view)
 
     
@@ -773,7 +757,7 @@ class UniverseASE:
         
 if __name__ == "__main__":
     
-    ## Define the simulation parameters
+    ## Define the example system and snapshot parameters
     zeolite_type = 'FAU'                        # e.g. "FAU", "BEA" or "MFI"
     solvent_type = 'methanol_240_water_960'     # e.g. "water_pure", "methanol_120_water_1080", "methanol_240_water_960", "methanol_600_water_600"
     pore_type = 'hydrophilic'                   # e.g. "hydrophilic", "hydrophobic"
