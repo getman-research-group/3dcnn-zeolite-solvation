@@ -1,15 +1,56 @@
-"""Generate, augment, validate, and serialize voxel-grid datasets.
+"""Build and serialize the complete augmented voxel-grid dataset.
 
-Each pickle file represents one adsorbate in one solvent/pore environment and
-contains 240 grids: 10 MD snapshots multiplied by the 24 proper rotations of a
-cube. The voxel representation uses separated molecular channel groups:
+This module connects single-snapshot voxel generation with rotational data
+augmentation and persistent storage. A pickle file is created for each unique
+combination of zeolite, solvent/pore environment, and adsorbate directory. It
+therefore represents one molecular simulation system rather than pooling the
+same adsorbate across several environments.
 
-- the first N channels contain adsorbate features only;
-- the last N channels contain solvent features only.
+For each system, snapshots ``intE01`` through ``intE10`` are processed. Every
+snapshot is converted to a ``20 × 20 × 20 × 28`` voxel grid under the manuscript
+defaults and expanded through the 24 proper rotations of a cube. The resulting
+240 augmented grids retain the 10 snapshot-specific DFT interaction-energy
+labels. The unaugmented grid for each snapshot is also stored separately for
+inspection; because the augmentation list includes the identity rotation by
+default, this produces 240 training grids plus 10 duplicate reference grids in
+the serialized object.
 
-The main entry point is :func:`generate_and_store_adsorbate_grids`, while the
-remaining helpers check expected files, validate pickle contents, and generate
-the complete configured dataset.
+The 28 channels are divided into two molecular groups:
+
+- channels 0–13 contain the 14 adsorbate atomic features;
+- channels 14–27 contain the same 14 features for solvent atoms.
+
+Each pickle contains a top-level ``metadata`` dictionary and a ``snapshots``
+dictionary keyed by snapshot number. Every snapshot record stores its original
+grid, augmented grids, rotation names, and DFT target energy. Metadata records
+the system identity, grid geometry, atomic-feature order, channel mapping,
+component-inclusion settings, and total grid count.
+
+Functions
+---------
+generate_and_store_adsorbate_grids(...)
+    Process all 10 snapshots for one zeolite–environment–adsorbate system,
+    generate and augment its voxel grids, optionally run an augmentation check,
+    assemble the nested dataset structure, and write one pickle file.
+
+check_all_pickle_files_exist(...)
+    Construct the filenames expected from the configured zeolites,
+    environments, adsorbates, and grid dimensions, then report which pickle
+    files already exist and which are missing. File contents are not opened.
+
+check_all_pickles_complete(...)
+    Open every expected pickle and validate its structure, snapshot count,
+    augmentation count, grid shape, channel metadata, labels, and rotation
+    records. It returns a detailed completeness report and identifies missing,
+    incomplete, or unreadable files.
+
+generate_complete_dataset(...)
+    Orchestrate dataset generation across all combinations in
+    ``ADSORBATES_BY_ENV``. Existing files may be skipped or regenerated, after
+    which the full collection is passed through the completeness validator.
+
+Running this module directly executes :func:`generate_complete_dataset` using
+the control settings in the ``__main__`` block.
 """
 # Import standard libraries
 import os
