@@ -1,9 +1,7 @@
 # Python Scripts
 
 This directory contains the data-processing, voxel-generation, model-training,
-evaluation, and visualization scripts used in the study. Commands should be run
-from the repository root after activating the environment defined in
-`environment.yml`.
+evaluation, and visualization scripts used in the study.
 
 ## Workflow
 
