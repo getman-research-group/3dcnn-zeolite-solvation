@@ -1755,6 +1755,9 @@ if __name__ == "__main__":
     generate_voxel_grids = GenerateVoxelGrids(**input_vars)
     target_interaction_energy = generate_voxel_grids.get_target_interaction_energy()
     
+    
+    
+    
     # # Example plotting adsorbate channels
     # generate_voxel_grids.plot_voxel_features_grid(feature='atom_type_C', group='adsorbate')
     # generate_voxel_grids.plot_voxel_features_grid(feature='atom_type_H', group='adsorbate')
