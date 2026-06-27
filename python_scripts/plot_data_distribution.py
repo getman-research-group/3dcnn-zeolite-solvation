@@ -104,7 +104,7 @@ class DataVisualizer:
     
     
     # Plot distribution of interaction energy
-    def plot_intE_distribution(self, bins: int = 30, figsize=(21, 7)):
+    def plot_intE_distribution_for_publication(self, bins: int = 30, figsize=(21, 7)):
         sns.set_style("white")
         intE = self.data['intE']
         intE_avg = self.data['intE_avg']
@@ -284,6 +284,10 @@ class DataVisualizer:
         axes[1].set_title('Interaction Energy by Solvent Composition', fontsize=auxiliary_font_size)
         axes[1].tick_params(axis='both', which='major', labelsize=tick_font_size)
         axes[1].tick_params(axis='x', rotation=0, labelsize=tick_font_size)
+        legend = axes[1].get_legend()
+        legend.set_title('Pore Type', prop={'size': 20})
+        for text in legend.get_texts():
+            text.set_fontsize(18)
         
         fig.tight_layout()
         if self.save_fig:
@@ -326,6 +330,10 @@ class DataVisualizer:
         ax.set_ylabel('Density', fontsize=auxiliary_font_size)
         ax.set_title('DFT Interaction Energy Density by Pore Type', fontsize=auxiliary_font_size)
         ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
+        legend = ax.get_legend()
+        legend.set_title('Pore Type', prop={'size': 20})
+        for text in legend.get_texts():
+            text.set_fontsize(18)
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
@@ -368,6 +376,10 @@ class DataVisualizer:
         ax.set_ylabel(r'$\Delta E^{\mathit{DFT}}_{\mathit{int}}$ (eV)', fontsize=auxiliary_font_size)
         ax.set_title('Snapshot vs System-Averaged Interaction Energy', fontsize=auxiliary_font_size)
         ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
+        legend = ax.get_legend()
+        legend.set_title('Pore Type', prop={'size': 20})
+        for text in legend.get_texts():
+            text.set_fontsize(18)
         
         # Add diagonal line for reference
         lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
@@ -457,7 +469,7 @@ if __name__ == '__main__':
                          )
     
     # Plot distribution of interaction energy
-    viz.plot_intE_distribution()
+    viz.plot_intE_distribution_for_publication()
 
     # Plot boxplot of interaction energy by pore type
     viz.plot_boxplot_by_pore()
