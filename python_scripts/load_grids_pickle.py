@@ -250,7 +250,7 @@ class VoxelGridsLoader:
                                 # Original format (15 channels)
                                 features = raw_data['metadata']['features']
                             elif 'atomic_features' in raw_data['metadata']:
-                                # Type_2 format (28 channels) - use feature_channel_mapping or atomic_features
+                                # For 28-channel grids, use the explicit channel mapping when available.
                                 if 'feature_channel_mapping' in raw_data['metadata'] and self.num_features == 28:
                                     # Use the real feature channel mapping for 28 channels
                                     feature_mapping = raw_data['metadata']['feature_channel_mapping']
@@ -307,7 +307,7 @@ class VoxelGridsLoader:
                                     if self.verbose:
                                         print(f"    Feature names extracted (original format): {self.feature_names}")
                                 elif 'atomic_features' in raw_data['metadata']:
-                                    # Type_2 format (28 channels) - use feature_channel_mapping or atomic_features
+                                    # Fall back to the ordered atomic-feature list for 28-channel grids.
                                     if 'feature_channel_mapping' in raw_data['metadata'] and self.num_features == 28:
                                         # Use the real feature channel mapping for 28 channels
                                         feature_mapping = raw_data['metadata']['feature_channel_mapping']
@@ -738,4 +738,3 @@ if __name__ == "__main__":
     # Show detailed information
     if test_code:
         loader.show_dataset_details()
-
