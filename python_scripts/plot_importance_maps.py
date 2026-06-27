@@ -515,7 +515,7 @@ class ImportanceMapAnalyzer:
         print(f"Using device: {self.device}")
         print(f"Using font size: {self.font_size}")
         
-        # Default feature names for zeolite data (type_2 format: 28 channels)
+        # Default names for the 14 adsorbate and 14 solvent feature channels.
         # First 14 channels: adsorbate features, Last 14 channels: solvent features
         self.atomic_features = [
             'atom_type_C', 'atom_type_H', 'atom_type_O',
@@ -820,7 +820,7 @@ class ImportanceMapAnalyzer:
         
         input_tensor = torch.FloatTensor(voxel_data).unsqueeze(0).to(self.device)
         print(f"    Input tensor shape before permute: {input_tensor.shape}")
-        input_tensor = input_tensor.permute(0, 4, 1, 2, 3)  # (1, 28, 20, 20, 20) for type_2 format
+        input_tensor = input_tensor.permute(0, 4, 1, 2, 3)  # (1, 28, 20, 20, 20)
         print(f"    Input tensor shape after permute: {input_tensor.shape}")
         data_source = "actual"
 
@@ -1031,7 +1031,7 @@ class ImportanceMapAnalyzer:
         return None
     
     def load_actual_voxel_data(self, sample_info):
-        """Load actual voxel data for the sample (Type_2 format: 28 channels)"""
+        """Load the sample's 28-channel separated-channel voxel data."""
         try:
             from load_grids_pickle import VoxelGridsLoader
             
@@ -1040,7 +1040,7 @@ class ImportanceMapAnalyzer:
                 adsorbates_by_env={sample_info['environment']: [sample_info['adsorbate']]},
                 box_grids_size=16.0,
                 box_increment=0.8,
-                num_features=28,  # Type_2 format: 28 channels
+                num_features=28,  # 14 adsorbate + 14 solvent channels
                 verbose=False
             )
             
@@ -1167,7 +1167,7 @@ class ImportanceMapAnalyzer:
                                 show_plots=True,
                                 save_plots=True,
                                 ):
-        """Generate enhanced channel importance plot for type_2 format (separated adsorbate/solvent channels)"""
+        """Plot channel importance separately for adsorbate and solvent features."""
         if analysis_results is None:
             print("No analysis results to plot")
             return None
@@ -1175,7 +1175,7 @@ class ImportanceMapAnalyzer:
         primary_importance = analysis_results['importance_map']
         sample_info = analysis_results['sample_info']
         
-        print(f"\n--- Generating Enhanced Channel Importance Plot (Type_2 Format)")
+        print(f"\n--- Generating Separated-Channel Importance Plot")
         
         # Create filename with channel_importance prefix and hyphens instead of underscores for consistency
         filename_prefix = f"channel_importance-{self.model_prefix}-{sample_info['zeolite']}-{sample_info['environment']}-{sample_info['adsorbate']}-snap{sample_info['snapshot']}-vox{sample_info['voxel_id']}"
@@ -1200,7 +1200,7 @@ class ImportanceMapAnalyzer:
         # Apply normalization
         channel_importance = channel_importance / channel_importance.max()
         
-        # Split into adsorbate and solvent channels for type_2 format
+        # Split the attribution values into adsorbate and solvent channels.
         num_atomic_features = len(self.atomic_features)
         adsorbate_importance = channel_importance[:num_atomic_features]
         solvent_importance = channel_importance[num_atomic_features:]
@@ -1616,7 +1616,7 @@ class ImportanceMapAnalyzer:
             
         sample_info = analysis_results['sample_info']
         
-        print(f"\n=== Generating Averaged 2D Projections Plot (Type_2 Format) ===")
+        print(f"\n=== Generating Averaged 2D Projections Plot ===")
         
         # Add ensemble info
         if fold_consistency is not None:
