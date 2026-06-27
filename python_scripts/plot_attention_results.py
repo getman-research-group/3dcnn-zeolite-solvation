@@ -289,7 +289,7 @@ class SpatialAttentionAnalyzer:
                 adsorbates_by_env={sample_info['environment']: [sample_info['adsorbate']]},
                 box_grids_size=16.0,
                 box_increment=0.8,
-                num_features=28,  # Type_2 format: 28 channels
+                num_features=28,  # 14 adsorbate + 14 solvent channels
                 verbose=False
             )
             
@@ -1563,4 +1563,3 @@ if __name__ == "__main__":
         show_plots=False,
         save_fig=True, # True
     )
-        
