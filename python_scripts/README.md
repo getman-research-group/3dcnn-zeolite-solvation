@@ -7,14 +7,12 @@ figures reported in the study.
 The scripts are organized around one main workflow:
 
 1. Read one LAMMPS topology file and one sampled MD snapshot.
-2. Extract atom-level descriptors such as force-field parameters, connectivity,
-   donor/acceptor capacity, and instantaneous hydrogen-bond information.
-3. Convert one snapshot into an adsorbate-centered voxel grid.
-4. Apply the 24 rotational augmentations used for model training.
-5. Store one pickle file for each zeolite-environment-adsorbate system.
-6. Load the serialized voxel data and train the attention-based 3D-CNN with
+2. Convert one snapshot into an adsorbate-centered voxel grid.
+3. Apply the 24 rotational augmentations used for model training.
+4. Store one pickle file for each zeolite-environment-adsorbate system.
+5. Load the serialized voxel data and train the attention-based 3D-CNN with
    grouped cross-validation.
-7. Plot model performance, training behavior, attention patterns, feature
+6. Plot model performance, training behavior, attention patterns, feature
    attribution results, and data-distribution summaries.
 
 ## Workflow
