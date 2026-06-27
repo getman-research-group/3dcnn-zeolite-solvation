@@ -1,20 +1,51 @@
 # -*- coding: utf-8 -*-
-"""
-augment_voxel_grids.py
-    The purpose of this code is to perform data augmentation on voxel grids generated from MD snapshots.
-    Specifically designed for format with separated channel groups:
-    - First N channels: adsorbate features only (solvent atoms = 0 in these channels)
-    - Last N channels: solvent features only (adsorbate atoms = 0 in these channels)
-    
-    Since voxel grids are cubic and centered on adsorbate COM, we use rotation transformations
-    which are physically meaningful and preserve the molecular interaction patterns.
+"""Apply rotational data augmentation to molecular voxel grids.
 
-Functions:
-    - augment_voxel_grid: Main function to augment a single voxel grid with format
-    - rotate_90_degrees: Rotate voxel grid by 90 degrees around specified axis
-    - apply_rotation_sequence: Apply sequence of rotations
-    - plot_all_augmented_grids: Independently create and plot augmented occupancy grids
-    - check_augment_grids: Verify augmentation quality for format
+This module expands each voxelized MD snapshot into symmetry-equivalent spatial
+orientations for 3D-CNN training. The input is a cubic grid centered on the
+adsorbate center of mass with shape ``(x, y, z, channels)``. Its channels are
+organized into two molecular groups: the first N channels describe adsorbate
+features and the last N channels describe solvent features.
+
+Data augmentation uses the 24 proper rotational symmetries of a cube, including
+the identity orientation. Every transformation is composed of exact 90-degree
+rotations around Cartesian axes and is implemented with ``numpy.rot90``. This
+permutes voxel positions without interpolation, reflection, or modification of
+the channel axis. Consequently, a rotated grid preserves its shape, feature
+values, channel ordering, and DFT interaction-energy label while presenting the
+same molecular configuration in a different orientation.
+
+The main dataset pipeline calls :func:`augment_voxel_grid` from
+``store_grids_pickle.py``. For each of the 10 snapshots in one molecular system,
+the function produces 24 grids that share one target label, yielding 240 grids
+per serialized system dataset.
+
+Functions
+---------
+rotate_90_degrees(grid, axis)
+    Rotate the three spatial dimensions by 90 degrees around the x, y, or z
+    axis. The feature-channel dimension is retained unchanged.
+
+apply_rotation_sequence(grid, sequence)
+    Compose a sequence of axis rotations such as ``"xy"`` or ``"xxy"`` and
+    return a new grid in the resulting orientation.
+
+augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences,
+                   include_identity=True)
+    Apply the configured cube rotations to one generated voxel grid. It returns
+    the rotated arrays together with rotation names, the unchanged target
+    energy, channel metadata, and atomic-feature names needed downstream.
+
+plot_all_augmented_grids(generate_voxel_grids, ...)
+    Build a separate three-channel occupancy representation for water,
+    methanol, and adsorbate atoms, rotate it for visualization only, and arrange
+    all orientations in a multi-panel 3D figure. It does not alter the training
+    grids returned by :func:`augment_voxel_grid`.
+
+check_augment_grids(original_grid, augmented_data, rotation_names)
+    Validate augmentation by checking value-sum preservation, target-label
+    consistency, duplicate orientations, expected channel dimensions, and
+    activity in both molecular channel groups.
 """
 
 import numpy as np
@@ -27,7 +58,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.global_vars import FEATURE_LIST
 from core.path import get_paths
 
-## DEFINING ROTATION SEQUENCES (24 unique rotations including identity)
+# The 24 proper rotations of a cube, expressed as ordered 90-degree rotations.
+# An empty string denotes the unrotated identity orientation.
 CUBE_ROTATION_SEQUENCES = [
     '',         # Identity (no rotation)
     'x',        # 90° around x-axis
