@@ -580,8 +580,8 @@ if __name__ == "__main__":
         adsorbate='11_01_propylene_glycol',
         snapshot_index=1,
         d_a_cutoff=3.5,
-        d_h_cutoff=1.2,
-        d_h_a_angle_cutoff=130.0,
+        d_h_cutoff=1.0,
+        d_h_a_angle_cutoff=150.0,
         verbose=True
     )
     
@@ -596,7 +596,7 @@ if __name__ == "__main__":
         adsorbate='11_01_propylene_glycol',
         snapshot_index=1,
         d_a_cutoff=3.5,
-        d_h_cutoff=1.2,
-        d_h_a_angle_cutoff=130.0,
+        d_h_cutoff=1.0,
+        d_h_a_angle_cutoff=150.0,
         verbose=True
     )
