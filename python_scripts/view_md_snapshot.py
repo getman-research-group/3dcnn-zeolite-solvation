@@ -749,7 +749,7 @@ if __name__ == "__main__":
                              )
     
     config_mda.view_system(
-        view_raw=True,
+        view_raw=False,
         components='adsorbate_solvent',
         save_image=False,
         image_format='png',
