@@ -1,5 +1,5 @@
 """
-store_grids_pickle_type_2.py
+store_grids_pickle.py
     The purpose of this code is to generate type_2 format voxel grids for the entire dataset,
     apply data augmentation (24 rotations), and store the results as pickle files.
     Each pickle file contains all 240 grids for one adsorbate (10 snapshots × 24 augmentations).
@@ -65,7 +65,7 @@ def generate_and_store_adsorbate_grids(
     """
     # For type_2, we use ATOMIC_FEATURES
     if feature_list is None:
-        # Define atomic features for type_2 format (same as in generate_voxel_grids_type_2.py)
+        # Define atomic features for type_2 format (same as in generate_voxel_grids.py)
         feature_list = [
             'atom_type_C',
             'atom_type_H', 
