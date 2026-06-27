@@ -21,6 +21,7 @@ The repository contains the data, scripts, trained models, example molecular sim
 ├── output_figures/          # Figures and visualization outputs generated from the analysis
 ├── md_simulations/          # Representative MD and DFT input/output files
 ├── overall_workflow.png     # Workflow overview figure
+├── environment.yml          # Conda environment for local data processing and analysis
 ├── LICENSE
 └── README.md
 ```
@@ -29,15 +30,20 @@ The `md_simulations/` directory includes representative LAMMPS and CP2K input fi
 
 ## Installation
 
-Create a Python environment with the scientific Python and deep-learning packages used by the scripts. A typical setup is:
+The required Python packages and tested versions are provided in `environment.yml`. From the repository root, create and activate the Conda environment with:
 
 ```bash
-conda create -n zeolite-3dcnn python=3.10
+conda env create -f environment.yml
 conda activate zeolite-3dcnn
-pip install numpy pandas scipy scikit-learn matplotlib seaborn torch mdanalysis captum
 ```
 
-GPU-enabled PyTorch is recommended for model training. CPU execution is sufficient for inspecting datasets and running smaller analysis scripts.
+Verify the PyTorch installation and available compute devices with:
+
+```bash
+python python_scripts/test_pytorch.py --skip-benchmark
+```
+
+This environment reproduces the CPU-compatible setup used for local data processing, voxel generation, plotting, and model evaluation. Model training on a GPU cluster requires a CUDA-enabled PyTorch build compatible with the cluster CUDA version; refer to the [official PyTorch installation selector](https://pytorch.org/get-started/locally/) for the appropriate installation command.
 
 ## Basic Usage
 
