@@ -374,12 +374,12 @@ if __name__ == "__main__":
     
     # Display final results
     print(f"\n=== Data Augmentation Summary ===")
-    print(f"Original grid shape: {generate_voxel_grids.voxel_grid.shape}")
-    print(f"Number of augmented grids: {len(augmented_data)}")
-    print(f"Data format: {augmented_data[0]['data_format']}")
-    print(f"All grids have target_interaction_energy: {augmented_data[0]['target_interaction_energy']} (eV)")
-    print(f"Channel structure preserved: ✓")
-    print(f"Rotation sequences tested: {len(CUBE_ROTATION_SEQUENCES)}")
+    print(f"    Original grid shape: {generate_voxel_grids.voxel_grid.shape}")
+    print(f"    Number of augmented grids: {len(augmented_data)}")
+    print(f"    Data format: {augmented_data[0]['data_format']}")
+    print(f"    All grids have target_interaction_energy: {augmented_data[0]['target_interaction_energy']} (eV)")
+    print(f"    Channel structure preserved: ✓")
+    print(f"    Rotation sequences tested: {len(CUBE_ROTATION_SEQUENCES)}")
     
 
     
