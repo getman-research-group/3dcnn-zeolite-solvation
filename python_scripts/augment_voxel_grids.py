@@ -102,13 +102,13 @@ def apply_rotation_sequence(grid, sequence):
 
 def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_identity=True):
     """
-    Augment a single voxel grid with all 24 rotations for type_2 format.
-    Type_2 format uses separated channel groups where:
+    Augment a single voxel grid with all 24 rotations for the separated-channel format.
+    The voxel representation uses separated channel groups where:
     - First N channels contain adsorbate features only
     - Last N channels contain solvent features only
     
     INPUTS:
-        generate_voxel_grids: GenerateVoxelGrids object (type_2 format)
+        generate_voxel_grids: GenerateVoxelGrids object using separated channel groups
             Object containing the voxel grid to augment and label information
         cube_rotation_sequences: list of strings
             List of rotation sequences to apply
@@ -119,12 +119,12 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
             - 'voxel_grid': rotated voxel grid (main version for ML training)
             - 'rotation_name': rotation sequence name
             - 'target_interaction_energy': target label (same for all rotations)
-            - 'data_format': 'type_2'
+            - 'data_format': 'separated_channels'
             - 'feature_channel_mapping': channel mapping information
         rotation_names: list of strings, corresponding rotation names for each grid
     """
     
-    print(f"\n\n--- Augmenting Type_2 Voxel Grid with all {len(cube_rotation_sequences)} rotations...")
+    print(f"\n\n--- Augmenting Voxel Grid with all {len(cube_rotation_sequences)} rotations...")
     
     # Get the main voxel grid
     voxel_grid = generate_voxel_grids.voxel_grid
@@ -141,10 +141,10 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
     print(f"--- Adsorbate channels: 0-{len(atomic_features)-1}")
     print(f"--- Solvent channels: {len(atomic_features)}-{voxel_grid.shape[3]-1}")
     
-    # Verify this is type_2 format
+    # Verify the expected separated-channel structure
     expected_channels = 2 * len(atomic_features)
     if voxel_grid.shape[3] != expected_channels:
-        raise ValueError(f"Expected {expected_channels} channels for type_2 format, got {voxel_grid.shape[3]}")
+        raise ValueError(f"Expected {expected_channels} channels for the separated-channel format, got {voxel_grid.shape[3]}")
     
     augmented_data = []
     rotation_names = []
@@ -157,7 +157,7 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
                     'voxel_grid': voxel_grid.copy(),
                     'rotation_name': 'identity',
                     'target_interaction_energy': target_energy,
-                    'data_format': 'type_2',
+                    'data_format': 'separated_channels',
                     'feature_channel_mapping': feature_channel_mapping.copy(),
                     'atomic_features': atomic_features.copy()
                 })
@@ -169,7 +169,7 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
                 'voxel_grid': rotated_grid,
                 'rotation_name': f'rotation_{sequence}',
                 'target_interaction_energy': target_energy,
-                'data_format': 'type_2',
+                'data_format': 'separated_channels',
                 'feature_channel_mapping': feature_channel_mapping.copy(),
                 'atomic_features': atomic_features.copy()
             })
@@ -178,7 +178,7 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
     print(f"    Augmentation completed!")
     print(f"    Number of augmented grids: {len(augmented_data)}")
     print(f"    Each grid shape: {augmented_data[0]['voxel_grid'].shape}")
-    print(f"    Data format: type_2 (separated channel groups)")
+    print(f"    Data format: separated channel groups")
     print(f"    Rotation names: {rotation_names[:5]}...")  # Show first 5 names
     print(f"    All grids have target_interaction_energy: {target_energy} (eV)")
     
@@ -187,7 +187,7 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
 def check_augment_grids(original_grid, augmented_data, rotation_names):
     """
     Check the quality of augmented grids by verifying sum preservation and uniqueness.
-    Specifically designed for type_2 data format with separated channel groups.
+    Specifically designed for voxel data with separated channel groups.
     
     INPUTS:
         original_grid: numpy array, original voxel grid
@@ -197,7 +197,7 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
     OUTPUTS:
         similarity_matrix: numpy array, upper triangular matrix showing grid similarities
     """
-    print(f"\n--- Checking Type_2 Augmented Grids Quality ---")
+    print(f"\n--- Checking Augmented Voxel Grids Quality ---")
     
     # Extract voxel grids and metadata from augmented_data
     voxel_grids_augment = [item['voxel_grid'] for item in augmented_data]
@@ -206,8 +206,8 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
     
     # Verify data format consistency
     unique_formats = set(data_formats)
-    if len(unique_formats) == 1 and 'type_2' in unique_formats:
-        print(f"    ✓ All grids use type_2 format (separated channel groups)")
+    if len(unique_formats) == 1 and 'separated_channels' in unique_formats:
+        print(f"    ✓ All grids use separated channel groups")
         print(f"    Original grid shape: {original_grid.shape}")
         num_features = len(augmented_data[0]['atomic_features'])
         print(f"    Channels 0-{num_features-1}: adsorbate features")
@@ -271,8 +271,8 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
     else:
         print(f"    ✗ Found {total_comparisons} duplicate pairs out of {n_grids*(n_grids-1)//2} comparisons")
     
-    # Part 4: Check type_2 specific channel structure
-    print(f"\n    Part 4: Checking type_2 channel structure integrity...")
+    # Part 4: Check the separated-channel structure
+    print(f"\n    Part 4: Checking separated-channel structure integrity...")
     if len(augmented_data) > 0:
         num_features = len(augmented_data[0]['atomic_features'])
         expected_channels = 2 * num_features
@@ -302,7 +302,7 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
         else:
             print(f"    ✗ WARNING: Expected {expected_channels} channels, got {actual_channels}")
     
-    print(f"    Type_2 augmentation quality check completed")
+    print(f"    Augmentation quality check completed")
     
     return similarity_matrix
 
@@ -310,7 +310,7 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
 
 if __name__ == "__main__":
     
-    # Define atomic features for type_2 format (same as in generate_voxel_grids.py)
+    # Define atomic features for the separated-channel format (same as in generate_voxel_grids.py)
     ATOMIC_FEATURES = [
         'atom_type_C',
         'atom_type_H',
@@ -328,7 +328,7 @@ if __name__ == "__main__":
         'LJ_sigma',
     ]
     
-    # Create input variables dictionary for testing type_2 format
+    # Create input variables dictionary for testing the voxel representation
     input_vars = {
         'zeolite_type':         'FAU',                      # Zeolite type (e.g. "FAU", "BEA", "MFI")
         'solvent_type':         'methanol_240_water_960',   # Solvent type (e.g. "water_pure", "methanol_240_water_960")
@@ -344,28 +344,28 @@ if __name__ == "__main__":
         'verbose':              True,
     }
     
-    print(f"=== Testing Type_2 Data Augmentation ===")
-    print(f"Type_2 format: Separated channel groups")
+    print(f"=== Testing Voxel Grid Data Augmentation ===")
+    print(f"Data format: Separated channel groups")
     print(f"- Channels 0-{len(ATOMIC_FEATURES)-1}: adsorbate features only")
     print(f"- Channels {len(ATOMIC_FEATURES)}-{2*len(ATOMIC_FEATURES)-1}: solvent features only")
     print(f"Expected total channels: {2 * len(ATOMIC_FEATURES)}")
     
-    # Process single snapshot with type_2 format
+    # Process one snapshot with separated channel groups
     generate_voxel_grids = GenerateVoxelGrids(**input_vars)
     
-    print(f"\n=== Original Type_2 Voxel Grid Information ===")
+    print(f"\n=== Original Voxel Grid Information ===")
     print(f"Voxel grid shape: {generate_voxel_grids.voxel_grid.shape}")
     print(f"Target interaction energy: {generate_voxel_grids.target_interaction_energy} (eV)")
     print(f"Feature channel mapping keys: {list(generate_voxel_grids.feature_channel_mapping.keys())}")
     
-    # Execute augmentation for type_2 format
+    # Execute voxel-grid augmentation
     augmented_data, rotation_names = augment_voxel_grid(
         generate_voxel_grids,
         cube_rotation_sequences = CUBE_ROTATION_SEQUENCES,
         include_identity = True
     )
     
-    # Check augmented grids quality with type_2 specific checks
+    # Check augmented-grid quality and channel separation
     similarity_matrix = check_augment_grids(
         original_grid = generate_voxel_grids.voxel_grid,
         augmented_data = augmented_data,
@@ -373,7 +373,7 @@ if __name__ == "__main__":
     )
     
     # Display final results
-    print(f"\n=== Type_2 Data Augmentation Summary ===")
+    print(f"\n=== Data Augmentation Summary ===")
     print(f"Original grid shape: {generate_voxel_grids.voxel_grid.shape}")
     print(f"Number of augmented grids: {len(augmented_data)}")
     print(f"Data format: {augmented_data[0]['data_format']}")
