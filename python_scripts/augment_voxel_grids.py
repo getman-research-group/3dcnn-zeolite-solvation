@@ -310,7 +310,7 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
 
 if __name__ == "__main__":
     
-    # Define atomic features for type_2 format (same as in generate_voxel_grids_type_2.py)
+    # Define atomic features for type_2 format (same as in generate_voxel_grids.py)
     ATOMIC_FEATURES = [
         'atom_type_C',
         'atom_type_H',
