@@ -1,8 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-read_md_config_mda.py
-Use MDAnalysis library to read LAMMPS trajectory and topology information.
-reference: https://docs.mdanalysis.org/
+read_md_snapshot.py
+
+This script loads one molecular dynamics snapshot from the LAMMPS simulation
+files and stores it as an MDAnalysis Universe for downstream voxel generation.
+
+For each selected system, two files are read:
+1. data_nvt_samp_new.lammpsdata: topology, atom types, molecule IDs, charges,
+   bonds, and simulation-cell information shared by all snapshots.
+2. intE<index>/intE<index>.traj: atomic coordinates for one sampled snapshot,
+   for example intE01/intE01.traj.
+
+The expected simulation directory is:
+md_simulations/<zeolite>/<solvent>-<pore_type>/<adsorbate>/
+
+The snapshotMDAnalysis class also assigns residue names for water, methanol,
+zeolite, and adsorbate atoms so that downstream scripts can select molecular
+components consistently. This script reads existing simulation files and does
+not modify them.
+
+MDAnalysis reference: https://docs.mdanalysis.org/
 """
 
 ## Importing Modules
@@ -24,8 +41,8 @@ from core.path import get_paths
 class snapshotMDAnalysis:
     
     '''
-    Load a single MD snapshot (LAMMPS data + dump) from the new folder structure.
-    
+    Load one LAMMPS topology file and one snapshot trajectory file, then create
+    an annotated MDAnalysis Universe for the selected molecular system.
     '''
 
     ### Initializing
@@ -51,23 +68,23 @@ class snapshotMDAnalysis:
         ## Parse solvent composition
         self._parse_solvent_composition()
         
-        ## Root directory for simulations
+        ## Get the root directory containing all MD simulation files
         self.md_simulations = get_paths('simulation_path')
         
-        ## Construct simulation directory path, e.g., .../FAU/water-pure_hydrophilic/01_methanol
+        ## Construct the system directory, e.g., .../FAU/water_pure-hydrophilic/01_methanol
         folder_name = f"{self.solvent_type}-{self.pore_type}"
         self.sim_dir = os.path.join(self.md_simulations, self.zeolite_type, folder_name, self.adsorbate)
 
-        ## define the path for lammpsdata file
+        ## Define the shared LAMMPS topology file
         self.path_lammpsdata = os.path.join(self.sim_dir,'data_nvt_samp_new.lammpsdata')
         
-        ## read lammpsdata and write atoms name
+        ## Read atom names and molecule IDs from the LAMMPS topology file
         self.read_lammpsdata()
         
-        # Load MD snapshot as Universe object
+        # Load the selected snapshot coordinates as an MDAnalysis Universe
         self.load_snapshot(self.snapshot_index)
         
-        ## Add attributes needed
+        ## Add atom and residue names used by downstream selections
         self.add_attributes()
         
         ## Print General Trajectory Information
@@ -130,6 +147,10 @@ class snapshotMDAnalysis:
         
 
     def read_lammpsdata(self):
+        """
+        Read the Atoms section of the LAMMPS data file and store mappings from
+        atom IDs to atom names and molecule IDs.
+        """
         with open(self.path_lammpsdata, 'r', encoding = "utf-8") as lammpsdata:
             lines = lammpsdata.readlines()
             
@@ -190,7 +211,7 @@ class snapshotMDAnalysis:
     
     
     def add_attributes(self):
-        """Add molecule information to MDAnalysis universe for zeolite-water-adsorbate system"""
+        """Assign atom names and component-specific residue names to the Universe."""
         
         ## Add attributes to topology information
         self.universe.add_TopologyAttr('resnames')
