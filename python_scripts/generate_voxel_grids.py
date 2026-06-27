@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-generate_voxel_grids_type_2.py
+generate_voxel_grids.py
     The purpose of this code is to generate a grid interpolation from a MD trajectory.
     So we can represent our system in a way that can be represented for a machine learning approach.
 
