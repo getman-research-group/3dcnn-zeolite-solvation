@@ -1,0 +1,3 @@
+/fs/ess/PAS2536/xiutinc/zeolite/FAU_cosolvent/03_water_methanol_240_960/02_lammps_generate/20_def/02_01_02_propanol/
+/fs/ess/PAS2536/xiutinc/zeolite/FAU_cosolvent/06_water_methanol_240_960_inte/02_lammps_generate/20_def/02_01_02_propanol/
+

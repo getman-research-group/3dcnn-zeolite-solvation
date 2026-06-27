@@ -1,0 +1,15 @@
+SLURM_NTASKS=48
+SLURM_NTASKS_PER_NODE=
+SLURM_JOB_NUM_NODES=1
+SLURM_JOB_NODELIST=c0227
+SLURM_CPUS_ON_NODE=48
+SLURM_GPUS_ON_NODE=
+
+/fs/scratch/PAS2536/xiutinc/396095.adg02_01_02_propanol
+
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+ ENDING THE VALENCE DENSITY CALCULATION!
+
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+

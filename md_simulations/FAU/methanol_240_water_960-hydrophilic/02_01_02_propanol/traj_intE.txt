@@ -1,0 +1,84 @@
+intE01.traj
+25
+Submitted batch job 386226
+Submitted batch job 386227
+intE02.traj
+25
+Submitted batch job 386228
+Submitted batch job 386229
+intE03.traj
+25
+Submitted batch job 386231
+Submitted batch job 386232
+intE04.traj
+25
+Submitted batch job 386233
+Submitted batch job 386234
+intE05.traj
+25
+Submitted batch job 386235
+Submitted batch job 386236
+intE06.traj
+25
+Submitted batch job 386237
+Submitted batch job 386238
+intE07.traj
+25
+Submitted batch job 386240
+Submitted batch job 386241
+intE08.traj
+25
+Submitted batch job 386242
+Submitted batch job 386243
+intE09.traj
+25
+Submitted batch job 386245
+Submitted batch job 386246
+intE10.traj
+25
+Submitted batch job 386247
+Submitted batch job 386248
+ 
+intE01/aq -7289.1403444426
+intE01/aq_zeo -7251.227465482536900
+intE01/g_sp -7034.377255186414004
+ 
+intE02/aq -7302.7532840345
+intE02/aq_zeo -7264.840461184443484
+intE02/g_sp -7034.376877827127828
+ 
+intE03/aq -7306.3824286891
+intE03/aq_zeo -7268.475317413242919
+intE03/g_sp -7034.377761595173979
+ 
+intE04/aq -7327.1145361925
+intE04/aq_zeo -7289.206818752876643
+intE04/g_sp -7034.377845893489393
+ 
+intE05/aq -7282.2878390541
+intE05/aq_zeo -7244.381604146125028
+intE05/g_sp -7034.377752168444204
+ 
+intE06/aq -7323.6228689002
+intE06/aq_zeo -7285.718111316973591
+intE06/g_sp -7034.377909578125582
+ 
+intE07/aq -7141.0929357262
+intE07/aq_zeo -7103.192804451841766
+intE07/g_sp -7034.377227129591120
+ 
+intE08/aq -7275.4494321529
+intE08/aq_zeo -7237.538254962799328
+intE08/g_sp -7034.376802840969503
+ 
+intE09/aq -7299.4205582329
+intE09/aq_zeo -7261.513913799136390
+intE09/g_sp -7034.377617267412461
+ 
+intE10/aq -7254.6733345915
+intE10/aq_zeo -7216.763328243125216
+intE10/g_sp -7034.377780016544421
+ 
+00_intE_zeo -6996.480263820952132
+[-0.432, -0.441, -0.262, -0.276, -0.238, -0.194, -0.086, -0.398, -0.253, -0.34]
+intE_dft: -0.292
