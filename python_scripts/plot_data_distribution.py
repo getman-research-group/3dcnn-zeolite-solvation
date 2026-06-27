@@ -1,3 +1,16 @@
+"""
+Visualize the DFT interaction-energy dataset used in this study.
+
+The script reads and combines the CSV files in the database directory, extracts
+the solvent and pore-type information from each environment name, and generates
+figures describing the energy distribution and MD snapshot variation. The main
+three-panel distribution plot is Figure 2 of the manuscript. Additional plots
+provide supporting checks of pore, solvent, and MD sampling effects.
+
+All figures are saved in ``output_figures/data_distribution`` when ``save_fig``
+is enabled.
+"""
+
 import os
 import numpy as np
 import pandas as pd
@@ -222,7 +235,7 @@ class DataVisualizer:
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'intE_distribution.png')
+            fig_path = os.path.join(self.output_dir, 'figure_2_dft_energy_distribution.png')
             fig.savefig(fig_path, dpi=self.dpi, bbox_inches='tight')
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
@@ -231,9 +244,11 @@ class DataVisualizer:
 
 
     # Boxplot of intE by pore_type
-    def plot_boxplot_by_pore(self, figsize=(16, 7)):
+    def plot_boxplot_by_pore(self, figsize=(18, 7)):
         sns.set_style("white")
         fig, axes = plt.subplots(1, 2, figsize=figsize, dpi=self.dpi)
+        auxiliary_font_size = min(self.font_size, 20)
+        tick_font_size = min(self.font_size, 18)
         
         # Define colors for pore types
         colors = ['#1f77b4', '#ff7f0e']  # Blue for hydrophilic, Orange for hydrophobic
@@ -241,17 +256,17 @@ class DataVisualizer:
         # Left subplot: Boxplot by pore type with colors
         sns.boxplot(x='pore_type', y='intE', hue='pore_type', data=self.data, ax=axes[0], 
                    palette=colors, legend=False)
-        axes[0].set_xlabel('Pore Type', fontsize=self.font_size)
-        axes[0].set_ylabel('Interaction Energy (eV)', fontsize=self.font_size)
-        axes[0].set_title('intE by Pore Type', fontsize=self.font_size)
-        axes[0].tick_params(axis='both', which='major', labelsize=self.font_size)
+        axes[0].set_xlabel('Pore Type', fontsize=auxiliary_font_size)
+        axes[0].set_ylabel('Interaction Energy (eV)', fontsize=auxiliary_font_size)
+        axes[0].set_title('Interaction Energy by Pore Type', fontsize=auxiliary_font_size)
+        axes[0].tick_params(axis='both', which='major', labelsize=tick_font_size)
         
         # Create a mapping for solvent names to methanol percentages
         solvent_mapping = {
-            'water_pure': '0% methanol',
-            'methanol_120_water_1080': '10% methanol',
-            'methanol_240_water_960': '20% methanol',
-            'methanol_600_water_600': '50% methanol'
+            'water_pure': '0% MeOH',
+            'methanol_120_water_1080': '10% MeOH',
+            'methanol_240_water_960': '20% MeOH',
+            'methanol_600_water_600': '50% MeOH'
         }
         
         # Create a copy of data with renamed solvents
@@ -259,21 +274,21 @@ class DataVisualizer:
         data_renamed['solvent_percent'] = data_renamed['solvent'].map(solvent_mapping)
         
         # Define the order of solvents from left to right
-        solvent_order = ['0% methanol', '10% methanol', '20% methanol', '50% methanol']
+        solvent_order = ['0% MeOH', '10% MeOH', '20% MeOH', '50% MeOH']
         
         # Right subplot: Solvent effect on interaction energy
         sns.boxplot(x='solvent_percent', y='intE', hue='pore_type', data=data_renamed, 
                    ax=axes[1], palette=colors, order=solvent_order)
-        axes[1].set_xlabel('Solvent Environment', fontsize=self.font_size)
-        axes[1].set_ylabel('Interaction Energy (eV)', fontsize=self.font_size)
-        axes[1].set_title('Solvent Effect on Interaction Energy', fontsize=self.font_size)
-        axes[1].tick_params(axis='both', which='major', labelsize=self.font_size)
-        axes[1].tick_params(axis='x', rotation=0, labelsize=self.font_size)  # No rotation needed now
+        axes[1].set_xlabel('Methanol Concentration', fontsize=auxiliary_font_size)
+        axes[1].set_ylabel('Interaction Energy (eV)', fontsize=auxiliary_font_size)
+        axes[1].set_title('Interaction Energy by Solvent Composition', fontsize=auxiliary_font_size)
+        axes[1].tick_params(axis='both', which='major', labelsize=tick_font_size)
+        axes[1].tick_params(axis='x', rotation=0, labelsize=tick_font_size)
         
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'intE_boxplot_by_pore.png')
+            fig_path = os.path.join(self.output_dir, 'dft_interaction_energy_boxplots.png')
             fig.savefig(fig_path, dpi=self.dpi, bbox_inches='tight')
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
@@ -285,15 +300,16 @@ class DataVisualizer:
     def plot_violin_by_pore(self, figsize=(8,6)):
         sns.set_style("white")
         fig, ax = plt.subplots(figsize=figsize, dpi=self.dpi)
+        auxiliary_font_size = min(self.font_size, 20)
         sns.violinplot(x='pore_type', y='intE', data=self.data, inner='quartile', ax=ax)
-        ax.set_xlabel('Pore Type', fontsize=self.font_size)
-        ax.set_ylabel('Interaction Energy (eV)', fontsize=self.font_size)
-        ax.set_title('intE Violin Plot by Pore Type', fontsize=self.font_size)
-        ax.tick_params(axis='both', which='major', labelsize=self.font_size)
+        ax.set_xlabel('Pore Type', fontsize=auxiliary_font_size)
+        ax.set_ylabel(r'$\Delta E^{\mathit{DFT}}_{\mathit{int}}$ (eV)', fontsize=auxiliary_font_size)
+        ax.set_title('DFT Interaction Energy by Pore Type', fontsize=auxiliary_font_size)
+        ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'intE_violin_by_pore.png')
+            fig_path = os.path.join(self.output_dir, 'dft_interaction_energy_violin_by_pore.png')
             fig.savefig(fig_path, dpi=self.dpi)
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
@@ -304,15 +320,16 @@ class DataVisualizer:
     def plot_kde_by_pore(self, figsize=(8,6)):
         sns.set_style("white")
         fig, ax = plt.subplots(figsize=figsize, dpi=self.dpi)
+        auxiliary_font_size = min(self.font_size, 20)
         sns.kdeplot(data=self.data, x='intE', hue='pore_type', fill=True, common_norm=False, alpha=0.5, ax=ax)
-        ax.set_xlabel('Interaction Energy (eV)', fontsize=self.font_size)
-        ax.set_ylabel('Density', fontsize=self.font_size)
-        ax.set_title('KDE of intE by Pore Type', fontsize=self.font_size)
-        ax.tick_params(axis='both', which='major', labelsize=self.font_size)
+        ax.set_xlabel(r'$\Delta E^{\mathit{DFT}}_{\mathit{int}}$ (eV)', fontsize=auxiliary_font_size)
+        ax.set_ylabel('Density', fontsize=auxiliary_font_size)
+        ax.set_title('DFT Interaction Energy Density by Pore Type', fontsize=auxiliary_font_size)
+        ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'intE_kde_by_pore.png')
+            fig_path = os.path.join(self.output_dir, 'dft_interaction_energy_kde_by_pore.png')
             fig.savefig(fig_path, dpi=self.dpi)
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
@@ -324,15 +341,16 @@ class DataVisualizer:
     def plot_qq_plot_intE(self, figsize=(7,6)):
         sns.set_style("white")
         fig, ax = plt.subplots(figsize=figsize, dpi=self.dpi)
+        auxiliary_font_size = min(self.font_size, 20)
         stats.probplot(self.data['intE'], dist='norm', plot=ax)
-        ax.set_title('Q–Q Plot of intE', fontsize=self.font_size)
-        ax.set_xlabel('Theoretical Quantiles', fontsize=self.font_size)
-        ax.set_ylabel('Ordered Values', fontsize=self.font_size)
-        ax.tick_params(axis='both', which='major', labelsize=self.font_size)
+        ax.set_title('Q-Q Plot of DFT Interaction Energy', fontsize=auxiliary_font_size)
+        ax.set_xlabel('Theoretical Quantiles', fontsize=auxiliary_font_size)
+        ax.set_ylabel('Ordered Interaction Energies (eV)', fontsize=auxiliary_font_size)
+        ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'intE_qq_plot.png')
+            fig_path = os.path.join(self.output_dir, 'dft_interaction_energy_qq_plot.png')
             fig.savefig(fig_path, dpi=self.dpi)
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
@@ -343,12 +361,13 @@ class DataVisualizer:
         """Scatter plot of individual intE vs intE_avg"""
         sns.set_style("white")
         fig, ax = plt.subplots(figsize=figsize, dpi=self.dpi)
+        auxiliary_font_size = min(self.font_size, 20)
         sns.scatterplot(data=self.data, x='intE_avg', y='intE', hue='pore_type', 
                        alpha=0.6, ax=ax)
-        ax.set_xlabel('Average Interaction Energy (intE_avg)', fontsize=self.font_size)
-        ax.set_ylabel('Individual Interaction Energy (intE)', fontsize=self.font_size)
-        ax.set_title('Individual vs Average Interaction Energy', fontsize=self.font_size)
-        ax.tick_params(axis='both', which='major', labelsize=self.font_size)
+        ax.set_xlabel(r'$\Delta E^{\mathit{DFT}}_{\mathit{sol}}$ (eV)', fontsize=auxiliary_font_size)
+        ax.set_ylabel(r'$\Delta E^{\mathit{DFT}}_{\mathit{int}}$ (eV)', fontsize=auxiliary_font_size)
+        ax.set_title('Snapshot vs System-Averaged Interaction Energy', fontsize=auxiliary_font_size)
+        ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
         
         # Add diagonal line for reference
         lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
@@ -358,18 +377,19 @@ class DataVisualizer:
         fig.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'intE_vs_intE_avg_scatter.png')
-            fig.savefig(fig_path, dpi=self.dpi)
+            fig_path = os.path.join(self.output_dir, 'snapshot_vs_system_average_energy.png')
+            fig.savefig(fig_path, dpi=self.dpi, bbox_inches='tight')
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
             plt.show()
         plt.close(fig)
 
 
-    def plot_md_sampling_analysis(self, figsize=(12, 8)):
+    def plot_md_sampling_analysis(self, figsize=(18, 12)):
         """Analyze MD sampling characteristics and snapshot variations"""
         sns.set_style("white")
         fig, axes = plt.subplots(2, 2, figsize=figsize, dpi=self.dpi)
+        auxiliary_font_size = min(self.font_size, 18)
         
         # 1. Snapshot energy trajectories for selected adsorbates
         selected_adsorbates = self.data['adsorbate'].value_counts().head(8).index
@@ -381,9 +401,9 @@ class DataVisualizer:
                     axes[0,0].plot(env_data['snapshot'], env_data['intE'], 
                                  marker='o', alpha=0.7, linewidth=1, markersize=3)
         
-        axes[0,0].set_title('MD Snapshot Energy Trajectories', fontsize=self.font_size)
-        axes[0,0].set_xlabel('Snapshot Number', fontsize=self.font_size)
-        axes[0,0].set_ylabel('Interaction Energy (eV)', fontsize=self.font_size)
+        axes[0,0].set_title('MD Snapshot Energy Trajectories', fontsize=auxiliary_font_size)
+        axes[0,0].set_xlabel('Snapshot Number', fontsize=auxiliary_font_size)
+        axes[0,0].set_ylabel('Interaction Energy (eV)', fontsize=auxiliary_font_size)
         
         # 2. Energy variance across snapshots
         variance_analysis = self.data.groupby(['environment', 'adsorbate']).agg({
@@ -394,28 +414,31 @@ class DataVisualizer:
         variance_analysis = variance_analysis.reset_index()
         
         sns.histplot(variance_analysis['std'], bins=15, kde=True, ax=axes[0,1])
-        axes[0,1].set_title('Distribution of Energy Standard Deviations', fontsize=self.font_size)
-        axes[0,1].set_xlabel('Standard Deviation (eV)', fontsize=self.font_size)
-        axes[0,1].set_ylabel('Count', fontsize=self.font_size)
+        axes[0,1].set_title('Energy Standard Deviations', fontsize=auxiliary_font_size)
+        axes[0,1].set_xlabel('Standard Deviation (eV)', fontsize=auxiliary_font_size)
+        axes[0,1].set_ylabel('Count', fontsize=auxiliary_font_size)
         
         # 3. Correlation between mean energy and sampling variance
         pore_colors = variance_analysis['environment'].str.split('-').str[1]
         sns.scatterplot(data=variance_analysis, x='mean', y='std', hue=pore_colors, ax=axes[1,0])
-        axes[1,0].set_title('Sampling Variance vs Mean Energy', fontsize=self.font_size)
-        axes[1,0].set_xlabel('Mean Interaction Energy (eV)', fontsize=self.font_size)
-        axes[1,0].set_ylabel('Standard Deviation (eV)', fontsize=self.font_size)
+        axes[1,0].set_title('Sampling Variation vs Mean Energy', fontsize=auxiliary_font_size)
+        axes[1,0].set_xlabel('Mean Interaction Energy (eV)', fontsize=auxiliary_font_size)
+        axes[1,0].set_ylabel('Standard Deviation (eV)', fontsize=auxiliary_font_size)
         
         # 4. Energy range distribution
         sns.boxplot(data=variance_analysis, y='range', 
                    x=variance_analysis['environment'].str.split('-').str[1], ax=axes[1,1])
-        axes[1,1].set_title('Energy Range Across Snapshots', fontsize=self.font_size)
-        axes[1,1].set_xlabel('Pore Type', fontsize=self.font_size)
-        axes[1,1].set_ylabel('Energy Range (eV)', fontsize=self.font_size)
+        axes[1,1].set_title('Energy Range Across Snapshots', fontsize=auxiliary_font_size)
+        axes[1,1].set_xlabel('Pore Type', fontsize=auxiliary_font_size)
+        axes[1,1].set_ylabel('Energy Range (eV)', fontsize=auxiliary_font_size)
+
+        for ax in axes.flat:
+            ax.tick_params(axis='both', which='major', labelsize=auxiliary_font_size - 2)
         
         plt.tight_layout()
         if self.save_fig:
             os.makedirs(self.output_dir, exist_ok=True)
-            fig_path = os.path.join(self.output_dir, 'md_sampling_analysis.png')
+            fig_path = os.path.join(self.output_dir, 'md_snapshot_sampling_analysis.png')
             fig.savefig(fig_path, dpi=self.dpi, bbox_inches='tight')
             print(f"Figure saved to {fig_path}")
         if self.show_plot:
@@ -466,4 +489,3 @@ if __name__ == '__main__':
     print(f"Mean energy: {viz.data['intE'].mean():.3f} ± {viz.data['intE'].std():.3f} eV")
     print(f"Pore types: {', '.join(viz.data['pore_type'].unique())}")
     
-
