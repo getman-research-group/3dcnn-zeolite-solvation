@@ -374,7 +374,7 @@ class UniverseASE:
                     image_filename = f"{self.zeolite_type}_{self.solvent_type}_{self.pore_type}_{self.adsorbate}_snap{self.snapshot_index:02d}_raw.{image_format}"
                     
                 # Create output directory if it doesn't exist
-                output_dir = os.path.join(get_paths('output_figure_path'), "voxel_grids", "ase")
+                output_dir = os.path.join(get_paths('output_figure_path'), "ase_visualization")
                 if not os.path.exists(output_dir):
                     os.makedirs(output_dir)
                 
@@ -635,7 +635,7 @@ class UniverseASE:
                 image_filename = f"{self.zeolite_type}_{self.solvent_type}_{self.pore_type}_{self.adsorbate}_snap{self.snapshot_index:02d}_{components}_box{box_size:.0f}A.{image_format}"
                 
             # Create output directory if it doesn't exist
-            output_dir = os.path.join(get_paths('output_figure_path'), "voxel_grids", "ase")
+            output_dir = os.path.join(get_paths('output_figure_path'), "ase_visualization")
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
             
@@ -748,10 +748,11 @@ if __name__ == "__main__":
                              verbose = True,
                              )
     
+    
     config_mda.view_system(
         view_raw=False,
         components='adsorbate_solvent',
-        save_image=False,
+        save_image=True,
         image_format='png',
         rotation='-67x,-27y,-11z',  # Custom rotation angles
         scale=1   # Scale factor: 1.0 = normal view, >1.0 = zoom out (farther), <1.0 = zoom in (closer)
