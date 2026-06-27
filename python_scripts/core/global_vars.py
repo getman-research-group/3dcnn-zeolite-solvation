@@ -187,14 +187,14 @@ FEATURE_LIST = [
 
 ## CSV files containing target interaction energy labels
 LABEL_CSV_FILES = [
-                     'methanol_120_water_1080-hydrophilic.csv',
-                     'methanol_120_water_1080-hydrophobic.csv',
-                     'methanol_240_water_960-hydrophilic.csv',
-                     'methanol_240_water_960-hydrophobic.csv',
-                     'methanol_600_water_600-hydrophilic.csv',
-                     'methanol_600_water_600-hydrophobic.csv',
-                     'water_pure-hydrophilic.csv',
-                     'water_pure-hydrophobic.csv',
+                     'FAU-methanol_120_water_1080-hydrophilic.csv',
+                     'FAU-methanol_120_water_1080-hydrophobic.csv',
+                     'FAU-methanol_240_water_960-hydrophilic.csv',
+                     'FAU-methanol_240_water_960-hydrophobic.csv',
+                     'FAU-methanol_600_water_600-hydrophilic.csv',
+                     'FAU-methanol_600_water_600-hydrophobic.csv',
+                     'FAU-water_pure-hydrophilic.csv',
+                     'FAU-water_pure-hydrophobic.csv',
                      ]
 
 
