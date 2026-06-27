@@ -52,7 +52,7 @@ Run commands from the repository root.
 Generate voxel-grid datasets from simulation files:
 
 ```bash
-python python_scripts/generate_voxel_grids_type_2.py
+python python_scripts/generate_voxel_grids.py
 ```
 
 Train the 3D-CNN model:
