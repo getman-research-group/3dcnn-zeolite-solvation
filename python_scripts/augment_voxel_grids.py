@@ -13,16 +13,19 @@ Functions:
     - augment_voxel_grid: Main function to augment a single voxel grid with format
     - rotate_90_degrees: Rotate voxel grid by 90 degrees around specified axis
     - apply_rotation_sequence: Apply sequence of rotations
+    - plot_all_augmented_grids: Independently create and plot augmented occupancy grids
     - check_augment_grids: Verify augmentation quality for format
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from generate_voxel_grids import GenerateVoxelGrids
 import sys
 import os
 # Add the parent directory to sys.path to access core modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.global_vars import FEATURE_LIST
+from core.path import get_paths
 
 ## DEFINING ROTATION SEQUENCES (24 unique rotations including identity)
 CUBE_ROTATION_SEQUENCES = [
@@ -187,6 +190,164 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
         print(f"    WARNING: Generated grids do not have a valid target interaction energy")
     
     return augmented_data, rotation_names
+
+
+def plot_all_augmented_grids(generate_voxel_grids,
+                             cube_rotation_sequences=CUBE_ROTATION_SEQUENCES,
+                             include_identity=True,
+                             max_cols=6,
+                             default_vox_rep=(3, 3),
+                             water_alpha=0.35,
+                             methanol_alpha=0.55,
+                             adsorbate_alpha=0.9,
+                             show_fig=False,
+                             save_fig=True,
+                             ):
+    """
+    Independently create and plot molecule-resolved augmented occupancy grids.
+
+    This function does not use or modify the augmented training grids. It first
+    builds a three-channel occupancy grid directly from the loaded MD snapshot,
+    with channels for water, methanol, and adsorbate. It then applies the requested
+    rotations only for visualization and arranges the results in one figure.
+
+    Nothing in this function runs unless it is explicitly called, so normal data
+    augmentation and dataset generation have no additional plotting overhead.
+
+    INPUTS:
+        generate_voxel_grids: initialized GenerateVoxelGrids object
+        cube_rotation_sequences: rotation sequences to visualize
+        include_identity: whether to include the original orientation
+        max_cols: maximum number of subplot columns
+        default_vox_rep: width and height multiplier for each subplot
+        water_alpha: transparency of water voxels
+        methanol_alpha: transparency of methanol voxels
+        adsorbate_alpha: transparency of adsorbate voxels
+        show_fig: whether to display the figure interactively
+        save_fig: whether to save the figure in output_figures/voxel_grids
+
+    OUTPUTS:
+        fig: matplotlib figure containing the augmented occupancy plots
+    """
+    universe = generate_voxel_grids.snapshot_mda.universe
+    box_dimensions = universe.dimensions[:3]
+
+    # Plot-only channels: water, methanol, and adsorbate.
+    occupancy_grid = np.zeros((*generate_voxel_grids.bin_array, 3), dtype=bool)
+    atom_groups = [
+        (universe.select_atoms('resname HOH'), 0),
+        (universe.select_atoms('resname MEO'), 1),
+        (universe.select_atoms('resname ADS'), 2),
+    ]
+
+    for atoms, channel_idx in atom_groups:
+        if len(atoms) == 0:
+            continue
+
+        relative_positions = atoms.positions - generate_voxel_grids.COM_adsorbate
+
+        # Apply the same periodic minimum image convention as voxel generation.
+        for dim in range(3):
+            relative_positions[:, dim] = (
+                relative_positions[:, dim]
+                - box_dimensions[dim]
+                * np.round(relative_positions[:, dim] / box_dimensions[dim])
+            )
+
+        within_box_mask = np.all(
+            np.abs(relative_positions) <= generate_voxel_grids.grid_half_box_length,
+            axis=1,
+        )
+        positions_in_box = relative_positions[within_box_mask]
+
+        if len(positions_in_box) == 0:
+            continue
+
+        shifted_positions = positions_in_box + generate_voxel_grids.grid_half_box_length
+        voxel_indices = np.floor(
+            shifted_positions / generate_voxel_grids.box_increment
+        ).astype(int)
+        voxel_indices = np.clip(
+            voxel_indices, 0, generate_voxel_grids.max_bin_num - 1
+        )
+
+        for indices in voxel_indices:
+            occupancy_grid[tuple(indices) + (channel_idx,)] = True
+
+    # Rotate only the plot-specific occupancy grid.
+    plot_grids = []
+    rotation_names = []
+    for sequence in cube_rotation_sequences:
+        if sequence == '':
+            if include_identity:
+                plot_grids.append(occupancy_grid.copy())
+                rotation_names.append('identity')
+        else:
+            plot_grids.append(apply_rotation_sequence(occupancy_grid, sequence))
+            rotation_names.append(f'rotation_{sequence}')
+
+    n_grids = len(plot_grids)
+    print(f"\n--- Plotting {n_grids} augmented occupancy grids...")
+    if n_grids == 0:
+        print("    No augmented occupancy grids available for plotting")
+        return None
+
+    n_cols = min(max_cols, n_grids)
+    n_rows = int(np.ceil(n_grids / n_cols))
+    fig = plt.figure(
+        figsize=(default_vox_rep[0] * n_cols, default_vox_rep[1] * n_rows)
+    )
+
+    for i, (grid, name) in enumerate(zip(plot_grids, rotation_names)):
+        ax = fig.add_subplot(n_rows, n_cols, i + 1, projection='3d')
+        x, y, z = np.indices(np.array(grid.shape[:3]) + 1)
+
+        water_voxels = grid[:, :, :, 0]
+        methanol_voxels = grid[:, :, :, 1]
+        adsorbate_voxels = grid[:, :, :, 2]
+
+        if np.any(water_voxels):
+            ax.voxels(x, y, z, water_voxels, facecolors='blue',
+                      alpha=water_alpha, edgecolor='none')
+        if np.any(methanol_voxels):
+            ax.voxels(x, y, z, methanol_voxels, facecolors='green',
+                      alpha=methanol_alpha, edgecolor='none')
+        if np.any(adsorbate_voxels):
+            ax.voxels(x, y, z, adsorbate_voxels, facecolors='red',
+                      alpha=adsorbate_alpha, edgecolor='none')
+
+        ax.set_title(name, fontsize=9, pad=4)
+        ax.set_xlim(0, grid.shape[0])
+        ax.set_ylim(0, grid.shape[1])
+        ax.set_zlim(0, grid.shape[2])
+        ax.set_box_aspect([1, 1, 1])
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_zlabel('')
+
+    plt.tight_layout()
+
+    if save_fig:
+        output_folder = os.path.join(get_paths('output_figure_path'), 'voxel_grids')
+        os.makedirs(output_folder, exist_ok=True)
+        figure_filename = (
+            f'voxel_grids_augment_{generate_voxel_grids.zeolite_type}-'
+            f'{generate_voxel_grids.solvent_type}-{generate_voxel_grids.pore_type}-'
+            f'{generate_voxel_grids.adsorbate}-'
+            f'snapshot{generate_voxel_grids.snapshot_index:02d}.png'
+        )
+        full_figure_path = os.path.join(output_folder, figure_filename)
+        fig.savefig(full_figure_path, dpi=300, bbox_inches='tight', facecolor='white')
+        print(f"    Figure saved to: {full_figure_path}")
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
 
 def check_augment_grids(original_grid, augmented_data, rotation_names):
     """
@@ -408,5 +569,16 @@ if __name__ == "__main__":
     print(f"    Channel structure preserved: {'✓' if channel_structure_preserved else '✗'}")
     print(f"    Rotation sequences generated: {len(rotation_names)}")
     
-
-    
+    # Optional visualization; no plotting work occurs unless this is called.
+    plot_all_augmented_grids(
+        generate_voxel_grids=generate_voxel_grids,
+        cube_rotation_sequences=CUBE_ROTATION_SEQUENCES,
+        include_identity=True,
+        max_cols=6,
+        default_vox_rep=(3, 3),
+        water_alpha=0.35,
+        methanol_alpha=0.55,
+        adsorbate_alpha=0.9,
+        show_fig=False,
+        save_fig=True,
+    )
