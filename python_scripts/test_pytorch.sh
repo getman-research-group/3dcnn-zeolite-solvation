@@ -1,40 +1,62 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# --- SLURM Resource Request ---
-#SBATCH --job-name=pytorch_benchmark                    # Job name
-#SBATCH --account=PAS2536                               # Your account name
-#SBATCH --cluster=ascend                                # Run on the Ascend cluster
-#SBATCH --nodes=1                                       # Request a single node
-#SBATCH --ntasks-per-node=8                             # Request 8 CPU cores
-#SBATCH --gpus-per-node=1                               # Request 1 GPU
-#SBATCH --time=00:10:00                                 # Job runtime (10 minutes)
-#SBATCH --output=../output_model_cnn/benchmark_%j.out   # Standard output and error log
+# Portable launcher for test_pytorch.py.
+#
+# Local usage:
+#   bash python_scripts/test_pytorch.sh
+#   bash python_scripts/test_pytorch.sh --device cpu --size 2048
+#
+# Example SLURM usage on the Ohio Supercomputer Center:
+#   sbatch --account=PAS2536 --cluster=ascend \
+#       python_scripts/test_pytorch.sh --device cuda --size 4096
+#
+# The SLURM account, cluster, partition, and Conda environment are intentionally
+# not hard-coded so that this script can be used outside the authors' system.
+# To activate a Conda environment before running the test, export CONDA_ENV:
+#   CONDA_ENV=torch bash python_scripts/test_pytorch.sh
+#   sbatch --export=ALL,CONDA_ENV=torch python_scripts/test_pytorch.sh
 
-# --- Job Steps ---
+# --- Optional SLURM resource request ---
+# These lines are ignored when the script is run directly with Bash.
+#SBATCH --job-name=pytorch_test
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --gpus-per-node=1
+#SBATCH --time=00:10:00
 
-# 1. Create a directory for log files, if it doesn't exist
-mkdir -p ../output_model_cnn
+set -euo pipefail
 
-# 2. Print job context
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+PYTHON_BIN=${PYTHON_BIN:-python}
+
+echo "========================================================================"
+echo "PyTorch environment test launcher"
+echo "========================================================================"
 echo "Date:              $(date)"
-echo "Job ID:            $SLURM_JOB_ID"
-echo "Job Name:          $SLURM_JOB_NAME"
-echo "Node(s) running on: $SLURM_JOB_NODELIST"
-echo "Current directory: $(pwd)"
-echo "-------------------------------------------------"
+echo "Hostname:          $(hostname)"
+echo "SLURM job ID:      ${SLURM_JOB_ID:-N/A}"
+echo "Script directory:  ${SCRIPT_DIR}"
 
-# 3. Set up the software environment
-echo "Activating Conda environment..."
-# Using your specified environment name: 'torch'
-conda activate torch
-echo "Conda environment activated: $CONDA_DEFAULT_ENV"
-echo "Python path: $(which python)"
-echo "-------------------------------------------------"
+if [[ -n "${CONDA_ENV:-}" ]]; then
+    if ! command -v conda >/dev/null 2>&1; then
+        echo "Error: CONDA_ENV is set, but the conda command is unavailable." >&2
+        exit 1
+    fi
 
-# 4. Execute the Python benchmark script
-echo "Running the Python benchmark script..."
-# Using your specified Python script name: 'test_pytorch.py'
-python test_pytorch.py --size 4096
+    eval "$(conda shell.bash hook)"
+    conda activate "${CONDA_ENV}"
+    echo "Conda environment: ${CONDA_DEFAULT_ENV}"
+else
+    echo "Conda environment: ${CONDA_DEFAULT_ENV:-current environment}"
+fi
 
-echo "-------------------------------------------------"
-echo "Job finished successfully."
+if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
+    echo "Error: Python executable '${PYTHON_BIN}' was not found." >&2
+    exit 1
+fi
+
+echo "Python executable: $(command -v "${PYTHON_BIN}")"
+echo "========================================================================"
+
+"${PYTHON_BIN}" "${SCRIPT_DIR}/test_pytorch.py" "$@"
