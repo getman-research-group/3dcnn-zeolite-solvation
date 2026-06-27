@@ -1,29 +1,42 @@
 # -*- coding: utf-8 -*-
+"""Generate a feature-rich voxel representation from one MD snapshot.
+
+This script is the central preprocessing step between the molecular simulation
+data and the 3D-CNN models. For one zeolite/solvent/adsorbate configuration and
+one snapshot, :class:`GenerateVoxelGrids` performs the following operations:
+
+1. Load the LAMMPS topology and snapshot coordinates through
+   :class:`read_md_snapshot.snapshotMDAnalysis`.
+2. Center a cubic grid on the adsorbate center of mass and apply the minimum
+   image convention to nearby atoms.
+3. Extract atom identity, hydrogen-bond, force-field, and connectivity
+   descriptors using ``extract_hbonds.py`` and
+   ``extract_lammpsdata_info.py``.
+4. Accumulate the descriptors in separate adsorbate and solvent channel groups.
+   The current representation contains 14 features per group, giving 28 total
+   channels.
+5. Normalize continuous channels and apply the PCMax van der Waals saturation
+   function to discrete channels.
+6. Optionally visualize the grids or serialize the generated arrays as a pickle
+   file for later model training and evaluation.
+
+The class handles one snapshot at a time. Batch generation over systems and
+snapshots is managed by the calling scripts. Coordinates and distances are in
+angstrom, while the interaction-energy label loaded from the database is in eV.
 """
-generate_voxel_grids.py
-    The purpose of this code is to generate a grid interpolation from a MD trajectory.
-    So we can represent our system in a way that can be represented for a machine learning approach.
 
-Functions:
-    normalize_3d_rdf: normalizes 3D RDFs
-
-"""
-
-## Importing Modules
-
-import sys
+# Standard-library modules for paths and serialized voxel datasets.
 import os
-import copy
 import pickle
+
+# Numerical, tabular, plotting, and feature-scaling libraries.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn.preprocessing import maxabs_scale, StandardScaler
 from typing import Optional
 
-
-## Custom Functions
+# Project configuration, snapshot reader, and chemical feature extractors.
 from core.path import get_paths
 from core.global_vars import FEATURE_LIST, LABEL_CSV_FILES
 from read_md_snapshot import snapshotMDAnalysis
@@ -32,8 +45,22 @@ from extract_lammpsdata_info import extract_is_hydrophobic_info, extract_is_dono
 from extract_hbonds import HydrogenBondDetector
 
 
-# Class Function To Generate Grid Interpolation Array Per Frame
-class GenerateVoxelGrids:    ### Initializing
+# Generate one voxel-grid sample from one MD snapshot.
+class GenerateVoxelGrids:
+    """Build the adsorbate-centered 28-channel representation for one snapshot.
+
+    Initialization runs the complete preprocessing pipeline: label lookup,
+    snapshot loading, atom-level feature extraction, occupancy construction,
+    continuous-feature normalization, and discrete-feature saturation. The
+    resulting arrays are available as ``voxel_grid`` and
+    ``voxel_occupancy_grid``.
+
+    The inclusion flags control which molecular groups contribute to the grid.
+    Adsorbate features occupy the first channel group and solvent features the
+    second. When zeolite atoms are requested, the existing implementation places
+    them in the second group as well.
+    """
+
     def __init__(
                 self,
                 zeolite_type = 'FAU',           # e.g. "FAU"
@@ -50,7 +77,7 @@ class GenerateVoxelGrids:    ### Initializing
                 verbose = False,
                 ):
         
-        ## Storing Initial Information
+        # Store the system identity, grid settings, and requested components.
         self.zeolite_type = zeolite_type
         self.solvent_type = solvent_type
         self.pore_type = pore_type
@@ -64,13 +91,14 @@ class GenerateVoxelGrids:    ### Initializing
         self.include_adsorbate = include_adsorbate
         self.verbose = verbose
 
-        # Load labels from CSV files (similar to build_graph.py)
+        # Load all configured label tables and find this snapshot's DFT energy.
         self.load_labels()
 
         # Use target interaction energy from labels
         self.target_interaction_energy = self.get_target_interaction_energy()
 
-        # Define actual atomic features (excluding mol_type which was just a molecular identity marker)
+        # Define the fixed feature order used by the trained 28-channel models.
+        # ``mol_type`` is represented by the separate channel groups, not a channel.
         self.atomic_features = ['atom_type_C',
                                'atom_type_H',
                                'atom_type_O',
@@ -166,7 +194,7 @@ class GenerateVoxelGrids:    ### Initializing
                 pore_type=self.pore_type,
                 adsorbate=self.adsorbate,
                 snapshot_index=self.snapshot_index,
-                r_cut=5.0,  # Same cutoff as used in HydrogenBondDetector
+                r_cut=5.0,  # Solvent-selection cutoff around adsorbate heavy atoms
                 verbose=verbose
             )
             
@@ -228,7 +256,7 @@ class GenerateVoxelGrids:    ### Initializing
             print(f"    Discrete features (binary/one-hot, will be saturated): {discrete_in_list}")
             print(f"    Continuous features (will be normalized): {continuous_in_list}")
 
-        # Calculate box grid parameters
+        # Define the cubic grid, center it on the adsorbate, and voxelize atoms.
         self.find_box_range()
         
         # Find adsorbate center of mass
@@ -240,10 +268,10 @@ class GenerateVoxelGrids:    ### Initializing
         # Create voxel features grid
         self.voxel_grid = self.create_voxel_features_grid()
         
-        # Normalize the voxel features grid (only continuous features)
+        # Scale only continuous channels; discrete channels are handled below.
         self.voxel_grid = self.normalize_voxel_features_grid()
 
-        # Saturate the voxel features grid
+        # Replace point-like discrete features with PCMax spatial fields.
         self.voxel_grid = self.saturate_voxel_features_grid()
     
     
@@ -565,6 +593,9 @@ class GenerateVoxelGrids:    ### Initializing
         '''
         Extract unique element types from the selected molecules (water and adsorbate) for atom_type features.
         Element names are extracted from atom names like "O_HOH", "H_ADS" by taking the part before underscore.
+
+        The detected symbols are stored in ``self.element_types`` and are used
+        for diagnostics only; the model channel order remains fixed.
         '''
         print(f'\n--- Extracting Element Types for Atom Type Features')
         
@@ -990,7 +1021,12 @@ class GenerateVoxelGrids:    ### Initializing
 
     def get_atom_features(self, atom, atom_type: str, feature_list: list) -> dict:
         '''
-        Extract atomic features for a given atom.
+        Extract the requested scalar features for one MDAnalysis atom.
+
+        Element identity is inferred from the atom-name prefix. Mass and charge
+        come from the loaded topology, whereas hydrophobicity, hydrogen-bond,
+        valence, and Lennard-Jones values come from mappings prepared during
+        initialization. Missing mappings are represented by zero.
         
         INPUTS:
             atom: MDAnalysis atom object
@@ -1552,7 +1588,6 @@ class GenerateVoxelGrids:    ### Initializing
                                     # Use PCMax for all binary features
                                     if feature_val > 0:  # Feature present
                                         saturated_grids[channel_idx][ix, iy, iz] = max(saturated_grids[channel_idx][ix, iy, iz], n)
-                                        saturated_grids[channel_idx][ix, iy, iz] = max(saturated_grids[channel_idx][ix, iy, iz], n)
                                     # If feature_val == 0, don't update (stays at 0)
         
 
@@ -1612,11 +1647,16 @@ class GenerateVoxelGrids:    ### Initializing
             'O': 1.52,   # Oxygen
         }
         
-        # Return van der Waals radius or default value
-        return vdw_radii.get(element)  # Default to carbon radius if element not found
+        # Return the radius for the element types represented in the current grids.
+        return vdw_radii.get(element)
 
     def load_labels(self):
-        """Load labels from CSV files for all environments."""
+        """Load and combine the interaction-energy tables configured for the project.
+
+        CSV files are resolved relative to ``database_path``. Missing or unreadable
+        files are skipped, and an empty DataFrame is retained when no table can be
+        loaded so voxel generation can still proceed without a target label.
+        """
         if self.verbose:
             print(f"\n--- Loading Labels from CSV Files ---")
         
@@ -1665,7 +1705,12 @@ class GenerateVoxelGrids:    ### Initializing
                 print(f"    ❌ No valid CSV files found or loaded")
 
     def get_target_interaction_energy(self) -> Optional[float]:
-        """Get the target interaction energy for current configuration."""
+        """Return the DFT interaction energy matching this system and snapshot.
+
+        The lookup uses zeolite, ``solvent_type-pore_type``, adsorbate, and
+        snapshot index. ``None`` is returned when labels are unavailable or no
+        exact row is found.
+        """
         if self.df_labels is None or self.df_labels.empty:
             if self.verbose:
                 print(f"    ⚠️  No labels loaded, returning None for target interaction energy")
@@ -1717,7 +1762,7 @@ class GenerateVoxelGrids:    ### Initializing
             return target_interaction_energy
 
 if __name__ == "__main__":
-    
+    # Representative mixed-solvent system included in this repository.
     FEATURE_LIST = [
                 'atom_type_C',
                 'atom_type_H',
@@ -1751,7 +1796,8 @@ if __name__ == "__main__":
         'verbose':              True,
     }
     
-    # Process single snapshot
+    # Generate and inspect one voxelized snapshot. Plotting examples below are
+    # optional and remain disabled during routine preprocessing.
     generate_voxel_grids = GenerateVoxelGrids(**input_vars)
     target_interaction_energy = generate_voxel_grids.get_target_interaction_energy()
     
