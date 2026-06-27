@@ -1,0 +1,32 @@
+name: zeolite-3dcnn
+
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+  # Core Python environment
+  - python=3.12.11
+  - pip
+
+  # Numerical analysis and data processing
+  - numpy=2.2.6
+  - pandas=2.3.0
+  - scipy=1.15.2
+  - scikit-learn=1.7.0
+
+  # Molecular simulation trajectory analysis
+  - mdanalysis=2.9.0
+
+  # Plotting
+  - matplotlib=3.10.3
+  - seaborn=0.13.2
+
+  # Machine learning and model interpretation
+  # This reproduces the CPU-compatible local analysis environment. Users who
+  # require a specific CUDA build for model training should follow the official
+  # installation selector at https://pytorch.org/get-started/locally/.
+  - pytorch=2.6.0
+
+  - pip:
+      - captum==0.7.0
