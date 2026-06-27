@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 train_3d_cnn_2_8.py
-Training script specifically for Type_2 voxel format (28 channels).
+Train the attention-enhanced 3D CNN on 28-channel voxel grids.
 Features:
-- Load Type_2 voxel grid data (28 channels: 14 adsorbate + 14 solvent features)
-- Train Type_2 3D CNN model with enhanced attention mechanism
+- Load separated-channel voxel data (14 adsorbate + 14 solvent features)
+- Train the 3D CNN model with its attention mechanisms
 - Use GroupKFold to prevent data leakage between adsorbates
-- Save/load model checkpoints with Type_2 format support
+- Save and load model checkpoints and cross-validation results
 - Support test mode for quick validation
 - Command-line interface with argparse
 """
@@ -40,12 +40,12 @@ from model_3d_cnn import AttentionCNN_2_8
 
 
 class VoxelDataset(Dataset):
-    """Custom PyTorch Dataset for Type_2 voxel grids (28 channels)"""
+    """PyTorch dataset for 28-channel voxel grids."""
     
     def __init__(self, X, y, scaler=None, fit_scaler=False):
         """
         Args:
-            X: numpy array of voxel grids (N, 20, 20, 20, 28)  # Type_2 format: 28 channels
+            X: numpy array of voxel grids with shape (N, 20, 20, 20, 28)
             y: numpy array of labels (N,)
             scaler: StandardScaler for labels
             fit_scaler: whether to fit the scaler
@@ -181,18 +181,18 @@ class CNN3DTrainer:
         self.model_save_dir = get_paths("output_model_cnn")
         os.makedirs(self.model_save_dir, exist_ok=True)
         
-        # Initialize data loader with Type_2 format (28 channels)
+        # Initialize the loader for 14 adsorbate and 14 solvent channels.
         self.data_loader = VoxelGridsLoader(
                                             zeolite_types=self.zeolite_types,
                                             adsorbates_by_env=self.adsorbates_by_env,
                                             box_grids_size=self.box_grids_size,
                                             box_increment=self.box_increment,
-                                            num_features=28,  # Type_2 format: 28 channels
+                                            num_features=28,
                                             verbose=self.verbose
                                             )
         
         if self.verbose:
-            print(f"\n--- Type_2 CNN3DTrainer initialized")
+            print(f"\n--- CNN3DTrainer initialized")
             print(f"    Expected data format: 28 channels (14 adsorbate + 14 solvent features)")
             print(f"    Output directory: {self.model_save_dir}")
             print(f"    Job ID: {self.job_id}")
@@ -224,7 +224,7 @@ class CNN3DTrainer:
             print(f"--- Random seeds set to {self.random_state} for reproducibility")
 
     def create_model(self, dropout_rate=0.25):
-        """Create Type_2 CNN model"""
+        """Create the 28-channel 3D CNN model."""
         # Use feature names extracted from actual data loading
         # These will be set after load_data() is called
         feature_names = getattr(self, 'feature_names', None)
@@ -236,29 +236,29 @@ class CNN3DTrainer:
         elif self.verbose:
             print(f"    Using {len(feature_names)} feature names from loaded data: {feature_names}")
         
-        # Type_2 CNN model (28 channels)
+        # Construct the model for separated adsorbate and solvent channels.
         model = AttentionCNN_2_8(
             in_channels=28, 
             dropout_rate=dropout_rate,
             feature_names=feature_names
         )
         if self.verbose:
-            print(f"     Created Type_2 CNN model (28 channels)")
+            print(f"     Created 3D CNN model (28 channels)")
         
         return model
 
-    def validate_type2_data(self):
-        """Validate that loaded data is in Type_2 format (28 channels)"""
+    def validate_voxel_data(self):
+        """Validate the spatial dimensions and 28-channel input layout."""
         if self.X_data is None:
             raise ValueError("Data not loaded yet. Call load_data() first.")
         
-        expected_shape = (20, 20, 20, 28)  # Type_2 format
+        expected_shape = (20, 20, 20, 28)
         actual_shape = self.X_data.shape[1:]
         
         if actual_shape != expected_shape:
             raise ValueError(
-                f"Data format mismatch! Expected Type_2 format with shape {expected_shape}, "
-                f"but got shape {actual_shape}. Please ensure you're using Type_2 voxel data with 28 channels."
+                f"Voxel-data shape mismatch: expected {expected_shape}, got {actual_shape}. "
+                "Expected 14 adsorbate and 14 solvent channels."
             )
         
         if self.verbose:
@@ -327,7 +327,8 @@ class CNN3DTrainer:
             raise ValueError("No valid data found with labels")
         
         # Convert to numpy arrays
-        self.X_data = np.stack(all_grids)   # Shape: (N, 20, 20, 20, 28)  N = (Number of adsorbates) * 10 * 24 for Type_2 format
+        # Shape: (N, 20, 20, 20, 28), with 10 snapshots × 24 rotations per system.
+        self.X_data = np.stack(all_grids)
         self.y_data = np.array(all_labels)  # Shape: (N,)
         
         # Create environment-adsorbate combinations for proper grouping
@@ -343,15 +344,15 @@ class CNN3DTrainer:
         self.input_data_shape = self.X_data.shape[1:]
         
         if self.verbose:
-            print(f"\n--- Type_2 format data loaded successfully:")
+            print(f"\n--- Separated-channel voxel data loaded successfully:")
             print(f"    Number of environment-adsorbate combinations: {self.num_env_adsorbates}")
             print(f"    Total datapoints: {self.num_total_datapoints}")
             print(f"    Points per env-adsorbate: {self.num_points_per_env_adsorbate}")
-            print(f"    Input data shape: {self.input_data_shape} (Type_2: 28 channels)")
+            print(f"    Input data shape: {self.input_data_shape} (28 channels)")
             print(f"    Label range: [{self.y_data.min():.3f}, {self.y_data.max():.3f}]")
         
-        # Validate that this is Type_2 format data
-        self.validate_type2_data()
+        # Validate the spatial dimensions and channel layout before training.
+        self.validate_voxel_data()
     
     def get_cv_splits(self):
         """Get cross-validation splits based on split_type"""
@@ -497,7 +498,7 @@ class CNN3DTrainer:
                 'random_state': self.random_state
             },
             'model_config': {
-                'input_channels': 28,  # Type_2 format: 28 channels
+                'input_channels': 28,
                 'test_mode': self.test_mode,
                 'random_state': self.random_state,
                 'dropout_rate': 0.25
@@ -642,7 +643,7 @@ class CNN3DTrainer:
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
             
-            # Create Type_2 model 
+            # Recreate the 28-channel model before loading its state dictionary.
             model_config = checkpoint.get('model_config', {})
             
             # Use feature names extracted from actual data loading
@@ -656,7 +657,7 @@ class CNN3DTrainer:
                 feature_names=feature_names
             )
             if self.verbose:
-                print(f"    � Loaded Type_2 CNN model from checkpoint (28 channels)")
+                print(f"    Loaded 3D CNN model from checkpoint (28 channels)")
                     
             model.load_state_dict(checkpoint['model_state_dict'])
             model.to(self.device)
@@ -2893,5 +2894,4 @@ if __name__ == "__main__":
         print("\n--- Traceback ---")
         traceback.print_exc()
         sys.exit(1)
-
 
