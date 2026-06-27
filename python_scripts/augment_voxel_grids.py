@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-augment_voxel_grids_type_2.py
+augment_voxel_grids.py
     The purpose of this code is to perform data augmentation on voxel grids generated from MD snapshots.
-    Specifically designed for type_2 format with separated channel groups:
+    Specifically designed for format with separated channel groups:
     - First N channels: adsorbate features only (solvent atoms = 0 in these channels)
     - Last N channels: solvent features only (adsorbate atoms = 0 in these channels)
     
@@ -10,10 +10,10 @@ augment_voxel_grids_type_2.py
     which are physically meaningful and preserve the molecular interaction patterns.
 
 Functions:
-    - augment_voxel_grid: Main function to augment a single voxel grid with type_2 format
+    - augment_voxel_grid: Main function to augment a single voxel grid with format
     - rotate_90_degrees: Rotate voxel grid by 90 degrees around specified axis
     - apply_rotation_sequence: Apply sequence of rotations
-    - check_augment_grids: Verify augmentation quality for type_2 format
+    - check_augment_grids: Verify augmentation quality for format
 """
 
 import numpy as np
