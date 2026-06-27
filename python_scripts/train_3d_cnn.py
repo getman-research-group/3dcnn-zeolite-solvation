@@ -35,7 +35,7 @@ from core.global_vars import ZEOLITE_TYPES, ADSORBATES_BY_ENV
 from load_grids_pickle import VoxelGridsLoader
 
 # Import model architecture
-from model_3d_cnn_2_8 import AttentionCNN_2_8
+from model_3d_cnn import AttentionCNN_2_8
 
 
 
