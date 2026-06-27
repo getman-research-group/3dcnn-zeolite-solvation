@@ -733,10 +733,10 @@ class UniverseASE:
 if __name__ == "__main__":
     
     ## Define the simulation parameters
-    zeolite_type = 'FAU'           # e.g. "FAU", "BEA" or "MFI"
-    solvent_type = 'water_pure'    # e.g. "water_pure", "methanol_120_water_1080", "methanol_240_water_960", "methanol_600_water_600"
-    pore_type = 'hydrophilic'      # e.g. "hydrophilic", "hydrophobic"
-    adsorbate = '04_04_glycerol'      # e.g. "01_methanol", "02_01_02_propanol"
+    zeolite_type = 'FAU'                        # e.g. "FAU", "BEA" or "MFI"
+    solvent_type = 'methanol_240_water_960'     # e.g. "water_pure", "methanol_120_water_1080", "methanol_240_water_960", "methanol_600_water_600"
+    pore_type = 'hydrophilic'                   # e.g. "hydrophilic", "hydrophobic"
+    adsorbate = '02_01_02_propanol'             # e.g. "01_methanol", "02_01_02_propanol"
     snapshot_index = 1
                     
     config_mda = UniverseASE(
