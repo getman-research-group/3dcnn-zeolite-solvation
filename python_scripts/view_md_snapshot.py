@@ -1,30 +1,50 @@
 # -*- coding: utf-8 -*-
 """
-This script is used to read and process MD configurations using the ASE library.
-It loads a trajectory from a lammpstrj file and a topology from a lammpsdata file.
-The trajectory is stored as a list of ASE Atoms objects, each representing a frame in the trajectory.
-The element symbols of the atoms in the system are updated based on the specified adsorbate name.
+Read and visualize one LAMMPS MD snapshot using the Atomic Simulation
+Environment (ASE).
+
+For a selected zeolite, solvent environment, adsorbate, and snapshot index, the
+script reads two files from the corresponding directory in ``md_simulations``:
+
+1. ``data_nvt_samp_new.lammpsdata`` provides the shared topology, simulation
+   cell, atom types, charges, and molecule IDs.
+2. ``intE<index>/intE<index>.traj`` provides the atomic coordinates for one
+   sampled MD snapshot.
+
+The ``UniverseASE`` class combines the topology and snapshot coordinates into
+one ASE Atoms object. The ``view_system`` method can either prepare the full
+simulation system or construct a cubic local environment centered on the
+adsorbate. Molecular components can be selected using the LAMMPS molecule IDs.
+
+When ``save_image=True``, a two-dimensional rendering is generated with
+``ase.visualize.plot.plot_atoms`` and saved in
+``output_figures/ase_visualization``. The ``rotation`` and ``scale`` parameters
+control this saved rendering. When ``save_image=False``, the structure is opened
+in the interactive ASE viewer, which uses its own viewing orientation.
+
+The script reads existing simulation files and does not modify them.
 """
 
 ## Importing Modules
 import os
 import numpy as np
-from ase.io import read
-from ase.io import write
-from ase.visualize import view
-from ase import Atoms
-import numpy as np
 import matplotlib.pyplot as plt
+from ase.io import read
+from ase.visualize import view
 from ase.visualize.plot import plot_atoms
 
 ## Custom Functions
 from core.path import get_paths
 
 
-# Class Function To Generate Grid Interpolation Array Per Frame
+# Class for loading and visualizing one MD snapshot
 class UniverseASE:
     """
-    Load a single MD snapshot from LAMMPS data and dump files using ASE.
+    Load one LAMMPS MD snapshot and prepare ASE visualizations.
+
+    The initialized object stores the system identifiers, input-file paths, and
+    an ASE Atoms object containing topology information from the LAMMPS data file
+    and coordinates from the selected trajectory snapshot.
     """
 
     def __init__(self,
@@ -35,6 +55,13 @@ class UniverseASE:
                  snapshot_index: int = 1,
                  verbose: bool = False,
                  ):
+        """
+        Initialize the selected molecular system and load one snapshot.
+
+        Parameters identify the zeolite, solvent composition, pore type,
+        adsorbate directory, and snapshot number. When ``verbose`` is True,
+        system composition and input-file information are printed.
+        """
         
         # Store basic settings
         self.verbose = verbose
@@ -70,7 +97,10 @@ class UniverseASE:
     
     def _parse_solvent_composition(self):
         """
-        Parse solvent type and determine molecule ID ranges for different components.
+        Define molecule-ID ranges for water, methanol, zeolite, and adsorbate.
+
+        The simulation setup contains 1200 solvent molecules followed by one
+        zeolite framework (molecule ID 1201) and one adsorbate (molecule ID 1202).
         """
         print(f"\n--- Parsing solvent composition: {self.solvent_type}")
         if self.solvent_type == 'water_pure':
@@ -116,8 +146,15 @@ class UniverseASE:
     
     
     
-    # Function to Load Trajectories
+    # Load the shared topology and one set of snapshot coordinates
     def load_ase_atoms(self, index: int):
+        """
+        Combine the LAMMPS topology with coordinates from one snapshot.
+
+        The returned ASE Atoms object preserves topology arrays such as
+        ``mol-id`` while replacing its positions with coordinates from the
+        selected ``intE<index>.traj`` file.
+        """
         
         # Load topology from lammps data file
         self.atoms_topology = read(self.path_lammpsdata, format='lammps-data')
@@ -161,7 +198,7 @@ class UniverseASE:
     
     def _print_system_info(self, atoms):
         """
-        Print detailed system information including atom counts, box size, etc.
+        Print atom counts, molecular composition, and simulation-cell details.
         """
         print(f"\n=== System Information ===")
         
@@ -241,17 +278,21 @@ class UniverseASE:
         box_size : float
             Size of the cubic viewing box in Angstroms
         view_raw : bool
-            If True, view the entire raw system without any transformations, cropping, or component filtering (default: False)
+            If True, prepare the full simulation system, center the adsorbate,
+            and crop the z range around the zeolite framework. If False, create
+            a local cubic box around the adsorbate (default: False).
         save_image : bool
             If True, save the visualization as an image file (default: False)
         image_filename : str
             Filename for saved image. If None, auto-generate based on system parameters
         image_format : str
-            Image format: 'png', 'pov', 'eps', 'svg' (default: 'png')
+            Image format such as 'png', 'eps', or 'svg' (default: 'png').
         rotation : str
-            Camera rotation angle. Examples: '0x,0y,0z', '45x,0y,0z', '0x,45y,0z', etc.
+            Rotation passed to ``plot_atoms`` when saving an image. This does
+            not set the orientation of the interactive ASE viewer.
         scale : float
-            View scale factor. Larger values = zoom out (farther view, thicker atom borders), smaller values = zoom in (closer view)
+            Scale of the saved plot. Larger values zoom out and smaller values
+            zoom in.
         """
         if not hasattr(self.ase_atoms, 'arrays') or 'mol-id' not in self.ase_atoms.arrays:
             if self.verbose:
