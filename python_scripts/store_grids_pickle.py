@@ -49,10 +49,24 @@ generate_complete_dataset(...)
     ``ADSORBATES_BY_ENV``. Existing files may be skipped or regenerated, after
     which the full collection is passed through the completeness validator.
 
-Running this module directly executes :func:`generate_complete_dataset` using
-the control settings in the ``__main__`` block.
+Command-line examples
+---------------------
+Generate one pickle for a specified simulation system::
+
+    python python_scripts/store_grids_pickle.py --test --zeolite FAU \
+        --environment methanol_240_water_960-hydrophilic \
+        --adsorbate 02_01_02_propanol
+
+Generate every pickle configured in ``core/global_vars.py``::
+
+    python python_scripts/store_grids_pickle.py --all
+
+Existing complete files are skipped. Add ``--force-regenerate`` to either
+command to rebuild the selected output. These commands let users reconstruct
+the large pickle files locally instead of downloading them from GitHub.
 """
 # Import standard libraries
+import argparse
 import os
 import pickle
 import numpy as np
@@ -790,21 +804,50 @@ def generate_complete_dataset(
     return completeness_results
 
 
-if __name__ == "__main__":
-    
-    # Suppress BioPython deprecation warnings
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="Bio")
-    
-    ############# CONTROL PARAMETERS #############
-    test = True    # True # False
-    force_regenerate = False  # True to regenerate even if files exist
+def parse_command_line():
+    """Parse an explicit single-system or full-dataset generation request."""
+    parser = argparse.ArgumentParser(
+        description="Generate augmented voxel-grid pickle files from MD snapshots."
+    )
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument(
+        '--test', action='store_true',
+        help='Generate and validate one zeolite/environment/adsorbate pickle.'
+    )
+    mode.add_argument(
+        '--all', action='store_true',
+        help='Generate all pickles configured in core/global_vars.py.'
+    )
+    parser.add_argument('--zeolite', help='Zeolite name required with --test.')
+    parser.add_argument(
+        '--environment',
+        help="Environment required with --test: '<solvent>-<pore_type>'."
+    )
+    parser.add_argument('--adsorbate', help='Adsorbate directory required with --test.')
+    parser.add_argument(
+        '--force-regenerate', action='store_true',
+        help='Regenerate output even if the expected pickle already exists.'
+    )
+    args = parser.parse_args()
 
-    # Test selection: when test=True, generate and validate only this one
-    # zeolite/environment/adsorbate combination (one pickle file).
-    test_zeolite = 'FAU'
-    test_environment = 'methanol_240_water_960-hydrophilic'
-    test_adsorbate = '02_01_02_propanol'
-    ##############################################
+    if args.test:
+        missing = [
+            name for name in ('zeolite', 'environment', 'adsorbate')
+            if getattr(args, name) is None
+        ]
+        if missing:
+            parser.error('--test requires ' + ', '.join(f'--{name}' for name in missing))
+    return args
+
+
+def run_generation_and_validation(
+    test=False,
+    force_regenerate=False,
+    test_zeolite=None,
+    test_environment=None,
+    test_adsorbate=None,
+):
+    """Run generation and, for a single-system test, detailed voxel validation."""
 
     # In normal mode, None selects the complete dataset from global_vars. In
     # test mode, these single-item containers restrict the existing generation
@@ -899,3 +942,15 @@ if __name__ == "__main__":
             print(f"    ✗ No complete files found for validation")
     else:
         print(f"\n--- Skipping validation test (test mode disabled) ---")
+
+
+if __name__ == "__main__":
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="Bio")
+    cli_args = parse_command_line()
+    run_generation_and_validation(
+        test=cli_args.test,
+        force_regenerate=cli_args.force_regenerate,
+        test_zeolite=cli_args.zeolite,
+        test_environment=cli_args.environment,
+        test_adsorbate=cli_args.adsorbate,
+    )
