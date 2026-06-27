@@ -1,7 +1,7 @@
 """
 model_3d_cnn_2_8.py
 This file contains the definitions for the 3D-CNN model with CBAM attention mechanism 
-for adsorbate-solvent interaction energy prediction, optimized for type_2 format.
+for adsorbate-solvent interaction-energy prediction using separated channels.
 
 Format specifications:
 - 28 input features (14 atomic features × 2 groups: adsorbate + solvent)
@@ -264,7 +264,7 @@ class ResidualBlock3D(nn.Module):
 class AttentionCNN_2_8(nn.Module):
     """
     3D CNN model for adsorbate-solvent interaction energy prediction.
-    Adapted for type_2 format with 28 input features (14 atomic features × 2 groups).
+    Accepts 28 input channels (14 atomic features × 2 molecular groups).
     
     Architecture (Optimized with Plan A):
     1. Dual-branch processing: separate adsorbate and solvent feature extraction
@@ -282,26 +282,28 @@ class AttentionCNN_2_8(nn.Module):
     - Secondary attention: layer1 (32→48) at full 20×20×20 resolution - ✅ USEFUL  
     - Removed attention: layer2 (52→56), layer3 (56→64) for maximum efficiency - ❌ TOO LATE
     
-    Type_2 format specifications:
+    Input representation:
     - Default 28 input channels (14 atomic features × 2 groups: adsorbate + solvent)
     - Supports dynamic channel numbers via in_channels parameter
     - Enhanced feature analysis for separated channel groups
     """
-    def __init__(self, in_channels=28,  # Default 28 for type_2 format
+    def __init__(self, in_channels=28,  # 14 adsorbate + 14 solvent channels
                  dropout_rate=0.35,     # Increased from 0.25 based on overfitting analysis
                  feature_names=None):   # Add feature_names parameter
         
         super(AttentionCNN_2_8, self).__init__()
         
         # Store configuration including input channels for dynamic feature analysis
-        self.in_channels = in_channels  # Store input channel count for type_2 compatibility
+        self.in_channels = in_channels
         self.dropout_rate = dropout_rate  # Store for analysis methods
         
         # Store feature names for analysis methods
         self.feature_names = feature_names
         
-        # Enhanced channel group processing for Type_2 format (28 channels = 14 adsorbate + 14 solvent)
-        assert in_channels == 28, "Type_2 format requires exactly 28 channels (14 adsorbate + 14 solvent)"
+        # The architecture expects matching 14-channel adsorbate and solvent groups.
+        assert in_channels == 28, (
+            "The model requires 28 channels: 14 adsorbate + 14 solvent"
+        )
         
         # Adsorbate branch: Enhanced for better information preservation
         # 🎯 ENHANCED: Increased capacity to reduce 75.2% information loss
@@ -442,13 +444,13 @@ class AttentionCNN_2_8(nn.Module):
         Forward pass for adsorbate-solvent interaction energy prediction
         
         Args:
-            x: Input voxel grid (batch_size, 28, 20, 20, 20) for type_2 format
+            x: Input voxel grid with shape (batch_size, 28, 20, 20, 20)
         
         Returns:
             Predicted interaction energy (batch_size, 1)
         """
             
-        # 🏗️ Dual-branch processing for Type_2 format
+        # Dual-branch processing for separated adsorbate and solvent channels.
         # Separate adsorbate and solvent channel groups
         adsorbate_channels = x[:, :14, :, :, :]   # First 14 channels: adsorbate features
         solvent_channels = x[:, 14:, :, :, :]     # Last 14 channels: solvent features
@@ -494,4 +496,3 @@ class AttentionCNN_2_8(nn.Module):
         
         return x
     
-
