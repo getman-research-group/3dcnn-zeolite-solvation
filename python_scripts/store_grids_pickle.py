@@ -796,7 +796,7 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=DeprecationWarning, module="Bio")
     
     ############# CONTROL PARAMETERS #############
-    test = False    # True # False
+    test = True    # True # False
     force_regenerate = False  # True to regenerate even if files exist
     ##############################################
     
@@ -824,7 +824,7 @@ if __name__ == "__main__":
             # Load one test file for validation
             test_zeolite = 'FAU'
             test_env = 'methanol_240_water_960-hydrophilic'
-            test_adsorbate = '01_methanol'
+            test_adsorbate = '02_01_02_propanol'
             
             # Calculate expected file path
             max_bin_num = int(16.0 / 0.8)  # box_grids_size / box_increment
