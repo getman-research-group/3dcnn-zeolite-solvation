@@ -43,16 +43,25 @@ and one methanol-water system. The script reads simulation data but does not
 modify the source trajectory or topology files.
 """
 
+# Standard-library modules for path handling and warning control.
 import os
 import warnings
+
+# Numerical arrays and tabular summaries.
 import numpy as np
 import pandas as pd
+
+# Type annotations used by the public return values.
 from typing import Dict, Tuple, List
+
+# MDAnalysis tools for molecular selections, hydrogen-bond detection,
+# coordinate transformations, and periodic-distance calculations.
 import MDAnalysis as mda
 from MDAnalysis.analysis.hydrogenbonds.hbond_analysis import HydrogenBondAnalysis
 from MDAnalysis import transformations
 from MDAnalysis.lib.distances import distance_array
 
+# Project utilities for path resolution, snapshot loading, and dataset metadata.
 from core.path import get_paths
 from read_md_snapshot import snapshotMDAnalysis
 from core.global_vars import ZEOLITE_TYPES, ADSORBATES_BY_ENV
