@@ -689,11 +689,11 @@ def generate_complete_dataset(
     if adsorbates_by_env is None:
         adsorbates_by_env = ADSORBATES_BY_ENV
     
-    # Handle test mode
+    # Test mode limits execution to the explicitly supplied zeolite/environment/
+    # adsorbate selection. The caller is responsible for passing a single-item
+    # configuration when only one pickle should be generated.
     if test:
         print(f"\n=== TEST MODE ENABLED ===")
-        zeolite_types = ['FAU']
-        adsorbates_by_env = {'methanol_240_water_960-hydrophilic': ['01_methanol']}
         print(f"    Using test dataset: {zeolite_types} with {adsorbates_by_env}")
     
     # Create common parameters for individual adsorbate processing
@@ -798,10 +798,26 @@ if __name__ == "__main__":
     ############# CONTROL PARAMETERS #############
     test = True    # True # False
     force_regenerate = False  # True to regenerate even if files exist
+
+    # Test selection: when test=True, generate and validate only this one
+    # zeolite/environment/adsorbate combination (one pickle file).
+    test_zeolite = 'FAU'
+    test_environment = 'methanol_240_water_960-hydrophilic'
+    test_adsorbate = '02_01_02_propanol'
     ##############################################
+
+    # In normal mode, None selects the complete dataset from global_vars. In
+    # test mode, these single-item containers restrict the existing generation
+    # pipeline to exactly the combination configured above.
+    selected_zeolites = [test_zeolite] if test else None
+    selected_adsorbates_by_env = (
+        {test_environment: [test_adsorbate]} if test else None
+    )
     
     # Generate complete dataset using the integrated function
     completeness_results = generate_complete_dataset(
+        zeolite_types=selected_zeolites,
+        adsorbates_by_env=selected_adsorbates_by_env,
         box_grids_size=16.0,
         box_increment=0.8,
         feature_list=None,  # Use the standard 14 atomic features.
@@ -821,11 +837,6 @@ if __name__ == "__main__":
         print(f"\n=== VOXEL DATA VALIDATION TEST ===")
         
         if completeness_results['files_complete'] > 0:
-            # Load one test file for validation
-            test_zeolite = 'FAU'
-            test_env = 'methanol_240_water_960-hydrophilic'
-            test_adsorbate = '02_01_02_propanol'
-            
             # Calculate expected file path
             max_bin_num = int(16.0 / 0.8)  # box_grids_size / box_increment
             num_features = 28  # 14 atomic features × 2 molecular groups
@@ -833,7 +844,7 @@ if __name__ == "__main__":
             
             output_dir = get_paths('dataset_cnn')
             subdir_name = f"size_16.0-box_0.8-shape_{voxel_shape_str}"
-            filename = f'{test_zeolite}-{test_env}-{test_adsorbate}-size_16.0-box_0.8-shape_{voxel_shape_str}.pkl'
+            filename = f'{test_zeolite}-{test_environment}-{test_adsorbate}-size_16.0-box_0.8-shape_{voxel_shape_str}.pkl'
             test_file_path = os.path.join(output_dir, subdir_name, filename)
             
             try:
