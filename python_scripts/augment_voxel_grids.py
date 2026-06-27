@@ -333,7 +333,7 @@ if __name__ == "__main__":
         'zeolite_type':         'FAU',                      # Zeolite type (e.g. "FAU", "BEA", "MFI")
         'solvent_type':         'methanol_240_water_960',   # Solvent type (e.g. "water_pure", "methanol_240_water_960")
         'pore_type':            'hydrophilic',              # Pore type (e.g. "hydrophilic", "hydrophobic")
-        'adsorbate':            '01_methanol',              # Adsorbate type (e.g. "01_methanol", "02_01_02_propanol")
+        'adsorbate':            '02_01_02_propanol',        # Adsorbate type (e.g. "01_methanol", "02_01_02_propanol")
         'snapshot_index':       1,                          # Single snapshot index
         'box_grids_size':       16.0,                       # Box size in Angstrom (centered on adsorbate)
         'box_increment':        0.8,                        # Voxel size in Angstrom
