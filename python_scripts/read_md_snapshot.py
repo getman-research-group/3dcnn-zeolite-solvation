@@ -361,9 +361,9 @@ if __name__ == "__main__":
     ## Define the simulation parameters
     zeolite_type = 'FAU'           # e.g. "FAU", "BEA" or "MFI"
     # "water_pure" "methanol_120_water_1080" "methanol_240_water_960" "methanol_600_water_600"
-    solvent_type = 'methanol_600_water_600'
+    solvent_type = 'methanol_240_water_960'
     pore_type = 'hydrophilic'      # e.g. "hydrophilic", "hydrophobic"
-    adsorbate = '01_methanol'      # e.g. "01_methanol", "02_01_02_propanol"
+    adsorbate = '02_01_02_propanol'      # e.g. "01_methanol", "02_01_02_propanol"
     snapshot_index = 1
                     
     snapshot_mda = snapshotMDAnalysis(
