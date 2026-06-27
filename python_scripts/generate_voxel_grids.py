@@ -1847,8 +1847,8 @@ if __name__ == "__main__":
         'pore_type':            'hydrophilic',  # Pore type (e.g. "hydrophilic", "hydrophobic")
         'adsorbate':            '02_01_02_propanol',  # Adsorbate type (e.g. "01_methanol", "02_01_02_propanol")
         'snapshot_index':       1,              # Single snapshot index
-        'box_grids_size':       20.0,           # Box size in Angstrom (centered on adsorbate)
-        'box_increment':        1.0,            # Voxel size in Angstrom
+        'box_grids_size':       16.0,           # Box size in Angstrom (centered on adsorbate)
+        'box_increment':        0.8,            # Voxel size in Angstrom
         'feature_list':         FEATURE_LIST,   # List of features to include in the voxel grid
         'include_solvent':      True,           # Whether to include solvent (water) atoms
         'include_zeolite':      False,          # Whether to include zeolite atoms
