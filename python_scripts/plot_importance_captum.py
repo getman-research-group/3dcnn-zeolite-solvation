@@ -434,7 +434,7 @@ class ImportanceMapAnalyzer:
         print(f"Using device: {self.device}")
         print(f"Using font size: {self.font_size}")
         
-        # Default feature names for zeolite data (type_2 format: 28 channels)
+        # Default names for the 14 adsorbate and 14 solvent feature channels.
         # First 14 channels: adsorbate features, Last 14 channels: solvent features
         self.atomic_features = [
             'atom_type_C', 'atom_type_H', 'atom_type_O',
@@ -780,7 +780,7 @@ class ImportanceMapAnalyzer:
         
         input_tensor = torch.FloatTensor(voxel_data).unsqueeze(0).to(self.device)
         print(f"    Input tensor shape before permute: {input_tensor.shape}")
-        input_tensor = input_tensor.permute(0, 4, 1, 2, 3)  # (1, 28, 20, 20, 20) for type_2 format
+        input_tensor = input_tensor.permute(0, 4, 1, 2, 3)  # (1, 28, 20, 20, 20)
         print(f"    Input tensor shape after permute: {input_tensor.shape}")
         data_source = "actual"
 
@@ -1037,7 +1037,7 @@ class ImportanceMapAnalyzer:
         return None
     
     def load_actual_voxel_data(self, sample_info):
-        """Load actual voxel data for the sample (Type_2 format: 28 channels)"""
+        """Load the sample's 28-channel separated-channel voxel data."""
         try:
             from load_grids_pickle import VoxelGridsLoader
             
@@ -1046,7 +1046,7 @@ class ImportanceMapAnalyzer:
                 adsorbates_by_env={sample_info['environment']: [sample_info['adsorbate']]},
                 box_grids_size=16.0,
                 box_increment=0.8,
-                num_features=28,  # Type_2 format: 28 channels
+                num_features=28,  # 14 adsorbate + 14 solvent channels
                 verbose=False
             )
             
