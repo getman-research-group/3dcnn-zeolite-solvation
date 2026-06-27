@@ -1800,38 +1800,6 @@ if __name__ == "__main__":
     for channel_name, channel_indices in generate_voxel_grids.feature_channel_mapping.items():
         print(f"        {channel_name}: channel {channel_indices[0]}")
     
-    # Test accessing specific channels
-    test_voxel_1_adsorbate_atom_type_C = generate_voxel_grids.voxel_grid[:, :, :, 0]
-    test_voxel_2_adsorbate_atom_type_H = generate_voxel_grids.voxel_grid[:, :, :, 1]
-    test_voxel_3_adsorbate_atom_type_O = generate_voxel_grids.voxel_grid[:, :, :, 2]
-    test_voxel_4_adsorbate_is_hydrophobic = generate_voxel_grids.voxel_grid[:, :, :, 3]  # Hydrophobic feature
-    test_voxel_5_adsorbate_is_donor = generate_voxel_grids.voxel_grid[:, :, :, 4]        # New H-bond donor potential
-    test_voxel_6_adsorbate_is_acceptor = generate_voxel_grids.voxel_grid[:, :, :, 5]     # New H-bond acceptor potential
-    test_voxel_7_adsorbate_is_hbonded = generate_voxel_grids.voxel_grid[:, :, :, 6]      # H-bond feature
-    test_voxel_8_adsorbate_is_hbonded_donor = generate_voxel_grids.voxel_grid[:, :, :, 7]  # H-bond feature
-    test_voxel_9_adsorbate_is_hbonded_acceptor = generate_voxel_grids.voxel_grid[:, :, :, 8] # H-bond feature
-    test_voxel_10_adsorbate_atom_mass = generate_voxel_grids.voxel_grid[:, :, :, 9]
-    test_voxel_11_adsorbate_partial_charge = generate_voxel_grids.voxel_grid[:, :, :, 10]
-    test_voxel_12_adsorbate_valence = generate_voxel_grids.voxel_grid[:, :, :, 11]          # Valence feature
-    test_voxel_13_adsorbate_lj_epsilon = generate_voxel_grids.voxel_grid[:, :, :, 12]      # LJ epsilon feature
-    test_voxel_14_adsorbate_lj_sigma = generate_voxel_grids.voxel_grid[:, :, :, 13]        # LJ sigma feature
-    
-    # Solvent channels (channels 14-27)
-    test_voxel_15_solvent_atom_type_C = generate_voxel_grids.voxel_grid[:, :, :, 14]
-    test_voxel_16_solvent_atom_type_H = generate_voxel_grids.voxel_grid[:, :, :, 15]
-    test_voxel_17_solvent_atom_type_O = generate_voxel_grids.voxel_grid[:, :, :, 16]
-    test_voxel_18_solvent_is_hydrophobic = generate_voxel_grids.voxel_grid[:, :, :, 17]     # Hydrophobic feature
-    test_voxel_19_solvent_is_donor = generate_voxel_grids.voxel_grid[:, :, :, 18]           # H-bond donor potential
-    test_voxel_20_solvent_is_acceptor = generate_voxel_grids.voxel_grid[:, :, :, 19]        # H-bond acceptor potential
-    test_voxel_21_solvent_is_hbonded = generate_voxel_grids.voxel_grid[:, :, :, 20]         # H-bond feature
-    test_voxel_22_solvent_is_hbonded_donor = generate_voxel_grids.voxel_grid[:, :, :, 21]   # H-bond donor feature
-    test_voxel_23_solvent_is_hbonded_acceptor = generate_voxel_grids.voxel_grid[:, :, :, 22] # H-bond acceptor feature
-    test_voxel_24_solvent_atom_mass = generate_voxel_grids.voxel_grid[:, :, :, 23]
-    test_voxel_25_solvent_partial_charge = generate_voxel_grids.voxel_grid[:, :, :, 24]
-    test_voxel_26_solvent_valence = generate_voxel_grids.voxel_grid[:, :, :, 25]            # Valence feature
-    test_voxel_27_solvent_lj_epsilon = generate_voxel_grids.voxel_grid[:, :, :, 26]         # LJ epsilon feature
-    test_voxel_28_solvent_lj_sigma = generate_voxel_grids.voxel_grid[:, :, :, 27]           # LJ sigma feature
-    
     # Print channel statistics to verify the data
     print(f"\n=== Channel Data Verification ===")
     print(f"Adsorbate channels (0-13):")
