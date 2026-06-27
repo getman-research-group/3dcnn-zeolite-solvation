@@ -1802,6 +1802,8 @@ if __name__ == "__main__":
     target_interaction_energy = generate_voxel_grids.get_target_interaction_energy()
     
     
+    # # Example plotting the overall voxel occupancy grid
+    generate_voxel_grids.plot_voxel_occupancy_grids()
     
     
     # # Example plotting adsorbate channels
