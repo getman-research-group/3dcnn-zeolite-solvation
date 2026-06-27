@@ -124,7 +124,7 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
         rotation_names: list of strings, corresponding rotation names for each grid
     """
     
-    print(f"\n\n--- Augmenting Voxel Grid with all {len(cube_rotation_sequences)} rotations...")
+    print(f"\n\n--- Augmenting Voxel Grid using {len(cube_rotation_sequences)} configured rotation sequences...")
     
     # Get the main voxel grid
     voxel_grid = generate_voxel_grids.voxel_grid
@@ -180,7 +180,11 @@ def augment_voxel_grid(generate_voxel_grids, cube_rotation_sequences, include_id
     print(f"    Each grid shape: {augmented_data[0]['voxel_grid'].shape}")
     print(f"    Data format: separated channel groups")
     print(f"    Rotation names: {rotation_names[:5]}...")  # Show first 5 names
-    print(f"    All grids have target_interaction_energy: {target_energy} (eV)")
+    if (isinstance(target_energy, (int, float, np.integer, np.floating))
+            and np.isfinite(target_energy)):
+        print(f"    All generated grids inherit target_interaction_energy: {target_energy} (eV)")
+    else:
+        print(f"    WARNING: Generated grids do not have a valid target interaction energy")
     
     return augmented_data, rotation_names
 
@@ -203,6 +207,9 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
     voxel_grids_augment = [item['voxel_grid'] for item in augmented_data]
     target_energies = [item['target_interaction_energy'] for item in augmented_data]
     data_formats = [item.get('data_format', 'unknown') for item in augmented_data]
+
+    if len(voxel_grids_augment) != len(rotation_names):
+        print(f"    WARNING: Found {len(voxel_grids_augment)} grids but {len(rotation_names)} rotation names")
     
     # Verify data format consistency
     unique_formats = set(data_formats)
@@ -229,23 +236,28 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
             print(f"    Original grid sum: {original_sum:.6f}")
             print(f"    Grid {name}: sum = {grid_sum:.6f}")
     
-    if sum_warnings == 0:
+    if len(voxel_grids_augment) == 0:
+        print(f"    WARNING: No augmented grids available for sum checking")
+    elif sum_warnings == 0:
         print(f"    ✓ All {len(voxel_grids_augment)} grids preserve the original sum")
     else:
         print(f"    ✗ {sum_warnings} grids have different sums!")
     
     # Part 2: Check target interaction energy consistency
     print(f"\n    Part 2: Checking target interaction energy consistency...")
-    valid_energies = [e for e in target_energies if e is not None]
-    if valid_energies:
-        unique_energies = set(valid_energies)
-        if len(unique_energies) == 1:
-            energy_value = list(unique_energies)[0]
-            print(f"    ✓ All {len(valid_energies)} grids have consistent target_interaction_energy: {energy_value} (eV)")
-        else:
-            print(f"    ✗ WARNING: Found {len(unique_energies)} different target energies: {unique_energies}")
+    valid_energies = [e for e in target_energies
+                      if isinstance(e, (int, float, np.integer, np.floating)) and np.isfinite(e)]
+    invalid_energy_count = len(target_energies) - len(valid_energies)
+
+    if not target_energies:
+        print(f"    WARNING: No augmented grids available for target-energy checking")
+    elif invalid_energy_count > 0:
+        print(f"    ✗ {invalid_energy_count} of {len(target_energies)} grids have missing or non-finite target energies")
+    elif np.allclose(valid_energies, valid_energies[0], rtol=0.0, atol=1e-12):
+        print(f"    ✓ All {len(valid_energies)} grids have consistent target_interaction_energy: {valid_energies[0]} (eV)")
     else:
-        print(f"    ⚠️  No valid target energies found")
+        unique_energies = np.unique(valid_energies)
+        print(f"    ✗ Found {len(unique_energies)} different target energies: {unique_energies.tolist()}")
     
     # Part 3: Check for duplicate/similar grids
     print(f"\n    Part 3: Checking grid uniqueness...")
@@ -266,13 +278,15 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
                 duplicate_count += 1
     
     total_comparisons = np.sum(similarity_matrix)
-    if total_comparisons == 0:
+    if n_grids == 0:
+        print(f"    WARNING: No augmented grids available for uniqueness checking")
+    elif total_comparisons == 0:
         print(f"    ✓ All {n_grids} grids are unique (no duplicates found)")
     else:
         print(f"    ✗ Found {total_comparisons} duplicate pairs out of {n_grids*(n_grids-1)//2} comparisons")
     
-    # Part 4: Check the separated-channel structure
-    print(f"\n    Part 4: Checking separated-channel structure integrity...")
+    # Part 4: Check channel-group dimensions and activity
+    print(f"\n    Part 4: Checking channel-group structure and activity...")
     if len(augmented_data) > 0:
         num_features = len(augmented_data[0]['atomic_features'])
         expected_channels = 2 * num_features
@@ -281,10 +295,10 @@ def check_augment_grids(original_grid, augmented_data, rotation_names):
         if actual_channels == expected_channels:
             print(f"    ✓ Correct channel structure: {actual_channels} channels (2 × {num_features} features)")
             
-            # Check channel separation integrity for a few random grids
+            # Check whether both channel groups contain data in the first few grids
             sample_grids = voxel_grids_augment[:min(3, len(voxel_grids_augment))]
             for i, grid in enumerate(sample_grids):
-                # Check if adsorbate and solvent channels are properly separated
+                # Check adsorbate- and solvent-channel activity
                 adsorbate_channels = grid[:, :, :, :num_features]
                 solvent_channels = grid[:, :, :, num_features:]
                 
@@ -377,9 +391,22 @@ if __name__ == "__main__":
     print(f"    Original grid shape: {generate_voxel_grids.voxel_grid.shape}")
     print(f"    Number of augmented grids: {len(augmented_data)}")
     print(f"    Data format: {augmented_data[0]['data_format']}")
-    print(f"    All grids have target_interaction_energy: {augmented_data[0]['target_interaction_energy']} (eV)")
-    print(f"    Channel structure preserved: ✓")
-    print(f"    Rotation sequences tested: {len(CUBE_ROTATION_SEQUENCES)}")
+
+    summary_energies = [item['target_interaction_energy'] for item in augmented_data]
+    valid_summary_energies = [e for e in summary_energies
+                              if isinstance(e, (int, float, np.integer, np.floating)) and np.isfinite(e)]
+    if (len(valid_summary_energies) > 0
+            and len(valid_summary_energies) == len(summary_energies)
+            and np.allclose(valid_summary_energies, valid_summary_energies[0], rtol=0.0, atol=1e-12)):
+        print(f"    Target interaction energy: {valid_summary_energies[0]} eV (consistent across all grids)")
+    else:
+        print(f"    Target interaction energy check: failed or incomplete")
+
+    expected_channels = 2 * len(generate_voxel_grids.atomic_features)
+    channel_structure_preserved = all(item['voxel_grid'].shape[3] == expected_channels
+                                      for item in augmented_data)
+    print(f"    Channel structure preserved: {'✓' if channel_structure_preserved else '✗'}")
+    print(f"    Rotation sequences generated: {len(rotation_names)}")
     
 
     
