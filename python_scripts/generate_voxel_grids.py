@@ -464,74 +464,102 @@ class GenerateVoxelGrids:
 
     
     # Keep the visualization methods but update them to work with the new structure
-    def plot_voxel_occupancy_grids(self, voxel_grid=None):
+    def plot_voxel_occupancy_grids(self, voxel_grid=None, show_fig=False,
+                                   show_title=True, save_fig=False,
+                                   plot_saturate=False, plot_molecules='both',
+                                   plot_clean=False):
         '''
-        Visualization of the voxel grid showing water atoms in blue and adsorbate atoms in red.
-        Uses existing voxel grid and atom position data to distinguish atom types.
+        Visualize water, methanol, and adsorbate occupancy as separate voxel sets.
+
+        Water atoms are shown in blue, methanol atoms in green, and adsorbate
+        atoms in red. This plotting method uses atom positions directly and is
+        independent of the feature-channel layout used by the model.
 
         INPUTS:
-            voxel_grid: numpy array, the voxel grid to visualize (optional, uses self.voxel_occupancy_grid if None)
+            voxel_grid: optional occupancy grid retained for API compatibility
+            show_fig: whether to display the figure interactively
+            show_title: whether to display system information above the plot
+            save_fig: whether to save the figure in output_figures/voxel_grids
+            plot_saturate: retained for compatibility with the old plotting call
+            plot_molecules: 'both', 'solvent', or 'adsorbate'
+            plot_clean: remove axis labels and tick labels for a clean figure
 
         OUTPUTS:
             Displays a 3D plot of the voxel grid with color-coded atoms.
         '''
         if voxel_grid is None:
             voxel_grid = self.voxel_occupancy_grid
+
+        valid_options = ['both', 'solvent', 'adsorbate']
+        if plot_molecules not in valid_options:
+            raise ValueError(f"plot_molecules must be one of {valid_options}, got '{plot_molecules}'")
+
+        if plot_saturate:
+            print("    Saturated occupancy plotting is not available for the separated channel layout; using atom positions.")
+            plot_saturate = False
             
         print(f"\n--- Plotting Voxel Grid for {self.zeolite_type}-{self.adsorbate} snapshot {self.snapshot_index:02d}")
         
         # Get the universe from the snapshot
         universe = self.snapshot_mda.universe
         
-        # Get solvent and adsorbate atoms separately
+        # Get water, methanol, and adsorbate atoms separately
         water_atoms = universe.select_atoms('resname HOH')
         methanol_atoms = universe.select_atoms('resname MEO')
         adsorbate_atoms = universe.select_atoms('resname ADS')
         
-        # Combine water and methanol for solvent visualization
-        if len(water_atoms) > 0 and len(methanol_atoms) > 0:
-            solvent_atoms = water_atoms + methanol_atoms
-            print(f"    Solvent atoms: {len(solvent_atoms)} ({len(water_atoms)} water + {len(methanol_atoms)} methanol)")
-        elif len(water_atoms) > 0:
-            solvent_atoms = water_atoms
-            print(f"    Solvent atoms: {len(solvent_atoms)} (water only)")
-        elif len(methanol_atoms) > 0:
-            solvent_atoms = methanol_atoms
-            print(f"    Solvent atoms: {len(solvent_atoms)} (methanol only)")
-        else:
-            solvent_atoms = universe.select_atoms('name DUMMY')  # Empty selection
-            print(f"    No solvent atoms found")
-        
+        print(f"    Water atoms found: {len(water_atoms)}")
+        print(f"    Methanol atoms found: {len(methanol_atoms)}")
         print(f"    Adsorbate atoms: {len(adsorbate_atoms)}")
         
-        # Initialize separate grids for solvent and adsorbate
-        solvent_voxels = np.zeros(self.bin_array, dtype=bool)
+        # Initialize separate grids for each molecule type
+        water_voxels = np.zeros(self.bin_array, dtype=bool)
+        methanol_voxels = np.zeros(self.bin_array, dtype=bool)
         adsorbate_voxels = np.zeros(self.bin_array, dtype=bool)
+        box_dimensions = universe.dimensions[:3]
         
-        # Process solvent atoms (water + methanol)
-        if len(solvent_atoms) > 0:
-            solvent_positions = solvent_atoms.positions
-            solvent_relative_positions = solvent_positions - self.COM_adsorbate
+        # Process water atoms
+        if len(water_atoms) > 0 and plot_molecules in ['both', 'solvent']:
+            water_relative_positions = water_atoms.positions - self.COM_adsorbate
             
             # Apply minimum image convention
-            box_dimensions = universe.dimensions[:3]
             for dim in range(3):
-                solvent_relative_positions[:, dim] = solvent_relative_positions[:, dim] - box_dimensions[dim] * np.round(solvent_relative_positions[:, dim] / box_dimensions[dim])
+                water_relative_positions[:, dim] = water_relative_positions[:, dim] - box_dimensions[dim] * np.round(water_relative_positions[:, dim] / box_dimensions[dim])
             
             # Filter atoms within box and convert to voxel indices
-            within_box_mask = np.all(np.abs(solvent_relative_positions) <= self.grid_half_box_length, axis=1)
-            solvent_in_box = solvent_relative_positions[within_box_mask]
+            within_box_mask = np.all(np.abs(water_relative_positions) <= self.grid_half_box_length, axis=1)
+            water_in_box = water_relative_positions[within_box_mask]
             
-            if len(solvent_in_box) > 0:
-                shifted_positions = solvent_in_box + self.grid_half_box_length
+            if len(water_in_box) > 0:
+                shifted_positions = water_in_box + self.grid_half_box_length
                 voxel_indices = np.floor(shifted_positions / self.box_increment).astype(int)
                 voxel_indices = np.clip(voxel_indices, 0, self.max_bin_num - 1)
                 
                 for indices in voxel_indices:
-                    solvent_voxels[tuple(indices)] = True
+                    water_voxels[tuple(indices)] = True
+
+        # Process methanol atoms independently from water
+        if len(methanol_atoms) > 0 and plot_molecules in ['both', 'solvent']:
+            methanol_relative_positions = methanol_atoms.positions - self.COM_adsorbate
+
+            # Apply minimum image convention
+            for dim in range(3):
+                methanol_relative_positions[:, dim] = methanol_relative_positions[:, dim] - box_dimensions[dim] * np.round(methanol_relative_positions[:, dim] / box_dimensions[dim])
+
+            # Filter atoms within box and convert to voxel indices
+            within_box_mask = np.all(np.abs(methanol_relative_positions) <= self.grid_half_box_length, axis=1)
+            methanol_in_box = methanol_relative_positions[within_box_mask]
+
+            if len(methanol_in_box) > 0:
+                shifted_positions = methanol_in_box + self.grid_half_box_length
+                voxel_indices = np.floor(shifted_positions / self.box_increment).astype(int)
+                voxel_indices = np.clip(voxel_indices, 0, self.max_bin_num - 1)
+
+                for indices in voxel_indices:
+                    methanol_voxels[tuple(indices)] = True
         
         # Process adsorbate atoms
-        if len(adsorbate_atoms) > 0:
+        if len(adsorbate_atoms) > 0 and plot_molecules in ['both', 'adsorbate']:
             adsorbate_positions = adsorbate_atoms.positions
             adsorbate_relative_positions = adsorbate_positions - self.COM_adsorbate
             
@@ -552,39 +580,71 @@ class GenerateVoxelGrids:
                     adsorbate_voxels[tuple(indices)] = True
         
         # Coordinates for plotting
-        x, y, z = np.indices(np.array(solvent_voxels.shape) + 1)
+        voxel_shape = self.bin_array
+        x, y, z = np.indices(np.array(voxel_shape) + 1)
         
         # Set up the figure and axis
-        fig = plt.figure(figsize=(10, 8))
+        fig = plt.figure(figsize=(12, 10))
         ax = fig.add_subplot(111, projection='3d')
-        ax.set_title(f'Voxel Grid - Snapshot {self.snapshot_index}\nBlue: Solvent, Red: Adsorbate')
+
+        if show_title and not plot_clean:
+            title_line1 = f'Voxel Grid - {self.zeolite_type} {self.pore_type.capitalize()}'
+            title_line2 = f'Solvent: {self.solvent_type}, Adsorbate: {self.adsorbate}, Snapshot: {self.snapshot_index}'
+            title_line3 = f'Visualization: {plot_molecules.capitalize()}'
+            ax.set_title(f'{title_line1}\n{title_line2}\n{title_line3}', fontsize=11)
 
         # Calculate aspect ratios based on the shape of the voxel grid
-        shape = np.array(solvent_voxels.shape)
+        shape = np.array(voxel_shape)
         aspect_ratio = shape / shape.max()
         
-        # Plot solvent atoms in blue
-        if np.any(solvent_voxels):
-            ax.voxels(x, y, z, solvent_voxels, facecolors='blue', alpha=0.7, edgecolor='none')
+        # Plot water atoms in blue with the transparency used by the old script
+        if np.any(water_voxels):
+            water_count = np.sum(water_voxels)
+            water_alpha = max(0.15, min(0.4, 600.0 / max(water_count, 100)))
+            ax.voxels(x, y, z, water_voxels, facecolors='blue', alpha=water_alpha, edgecolor='none')
+
+        # Plot methanol atoms in green
+        if np.any(methanol_voxels):
+            methanol_count = np.sum(methanol_voxels)
+            methanol_alpha = max(0.3, min(0.6, 500.0 / max(methanol_count, 50)))
+            ax.voxels(x, y, z, methanol_voxels, facecolors='green', alpha=methanol_alpha, edgecolor='none')
         
         # Plot adsorbate atoms in red
         if np.any(adsorbate_voxels):
-            ax.voxels(x, y, z, adsorbate_voxels, facecolors='red', alpha=0.8, edgecolor='none')
+            ax.voxels(x, y, z, adsorbate_voxels, facecolors='red', alpha=0.9, edgecolor='none')
 
         # Set the aspect of the plot to match the voxel dimensions
         ax.set_box_aspect(aspect_ratio)
+        ax.set_xlim(0, voxel_shape[0])
+        ax.set_ylim(0, voxel_shape[1])
+        ax.set_zlim(0, voxel_shape[2])
         
-        ax.set_xlabel('X dimension (voxels)')
-        ax.set_ylabel('Y dimension (voxels)')
-        ax.set_zlabel('Z dimension (voxels)')
-        
-        # Add legend
-        from matplotlib.patches import Patch
-        legend_elements = [Patch(facecolor='blue', alpha=0.7, label='Solvent'),
-                           Patch(facecolor='red', alpha=0.8, label='Adsorbate')]
-        ax.legend(handles=legend_elements, loc='upper right')
+        if not plot_clean:
+            ax.set_xlabel('X dimension (voxels)')
+            ax.set_ylabel('Y dimension (voxels)')
+            ax.set_zlabel('Z dimension (voxels)')
+        else:
+            ax.set_xlabel('')
+            ax.set_ylabel('')
+            ax.set_zlabel('')
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+            ax.set_zticklabels([])
 
-        plt.show()
+        print(f"    Water voxels: {np.sum(water_voxels)}")
+        print(f"    Methanol voxels: {np.sum(methanol_voxels)}")
+        print(f"    Adsorbate voxels: {np.sum(adsorbate_voxels)}")
+
+        if show_fig:
+            plt.show()
+
+        if save_fig:
+            save_folder = os.path.join(get_paths('output_figure_path'), 'voxel_grids')
+            os.makedirs(save_folder, exist_ok=True)
+            molecule_suffix = f'_{plot_molecules}' if plot_molecules != 'both' else ''
+            fig_filename = f'01_voxel_occupancy_{self.zeolite_type}_{self.solvent_type}_{self.pore_type}_{self.adsorbate}_snapshot{self.snapshot_index:02d}{molecule_suffix}.png'
+            fig.savefig(os.path.join(save_folder, fig_filename), dpi=1000, bbox_inches='tight')
+            print(f"    Figure saved as {fig_filename}")
         
         return fig, ax
     
@@ -1787,8 +1847,8 @@ if __name__ == "__main__":
         'pore_type':            'hydrophilic',  # Pore type (e.g. "hydrophilic", "hydrophobic")
         'adsorbate':            '02_01_02_propanol',  # Adsorbate type (e.g. "01_methanol", "02_01_02_propanol")
         'snapshot_index':       1,              # Single snapshot index
-        'box_grids_size':       16.0,           # Box size in Angstrom (centered on adsorbate)
-        'box_increment':        0.8,            # Voxel size in Angstrom
+        'box_grids_size':       20.0,           # Box size in Angstrom (centered on adsorbate)
+        'box_increment':        1.0,            # Voxel size in Angstrom
         'feature_list':         FEATURE_LIST,   # List of features to include in the voxel grid
         'include_solvent':      True,           # Whether to include solvent (water) atoms
         'include_zeolite':      False,          # Whether to include zeolite atoms
@@ -1803,7 +1863,12 @@ if __name__ == "__main__":
     
     
     # # Example plotting the overall voxel occupancy grid
-    generate_voxel_grids.plot_voxel_occupancy_grids()
+    generate_voxel_grids.plot_voxel_occupancy_grids(plot_saturate=False,
+                                                    show_fig=True,
+                                                    show_title=False,
+                                                    save_fig=True,
+                                                    plot_clean=True,
+                                                    plot_molecules='both')
     
     
     # # Example plotting adsorbate channels
