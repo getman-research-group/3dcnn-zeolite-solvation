@@ -576,9 +576,9 @@ if __name__ == "__main__":
         include_identity=True,
         max_cols=6,
         default_vox_rep=(3, 3),
-        water_alpha=0.35,
-        methanol_alpha=0.55,
-        adsorbate_alpha=0.9,
+        water_alpha=1,
+        methanol_alpha=1,
+        adsorbate_alpha=1,
         show_fig=False,
         save_fig=True,
     )
