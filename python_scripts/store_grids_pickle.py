@@ -1,15 +1,15 @@
-"""
-store_grids_pickle.py
-    The purpose of this code is to generate type_2 format voxel grids for the entire dataset,
-    apply data augmentation (24 rotations), and store the results as pickle files.
-    Each pickle file contains all 240 grids for one adsorbate (10 snapshots × 24 augmentations).
-    
-    Type_2 format uses separated channel groups:
-    - First N channels: adsorbate features only (solvent atoms = 0 in these channels)
-    - Last N channels: solvent features only (adsorbate atoms = 0 in these channels)
+"""Generate, augment, validate, and serialize voxel-grid datasets.
 
-Functions:
-    - generate_and_store_adsorbate_grids: Main function to process and store one complete adsorbate
+Each pickle file represents one adsorbate in one solvent/pore environment and
+contains 240 grids: 10 MD snapshots multiplied by the 24 proper rotations of a
+cube. The voxel representation uses separated molecular channel groups:
+
+- the first N channels contain adsorbate features only;
+- the last N channels contain solvent features only.
+
+The main entry point is :func:`generate_and_store_adsorbate_grids`, while the
+remaining helpers check expected files, validate pickle contents, and generate
+the complete configured dataset.
 """
 # Import standard libraries
 import os
@@ -17,7 +17,7 @@ import pickle
 import numpy as np
 import warnings
 
-# Import custom modules for type_2 format
+# Import voxel generation and rotational augmentation utilities.
 from generate_voxel_grids import GenerateVoxelGrids
 from augment_voxel_grids import augment_voxel_grid, check_augment_grids
 from augment_voxel_grids import CUBE_ROTATION_SEQUENCES
@@ -45,27 +45,27 @@ def generate_and_store_adsorbate_grids(
                                         save_pickle=True,
                                     ):
     """
-    Generate type_2 format voxel grids for one complete adsorbate, apply augmentation, and store as pickle.
-    
-    Type_2 format features:
-    - Separated channel groups (adsorbate + solvent)
-    - 2×N channels total (N atomic features × 2 groups)
-    - Perfect physical separation between adsorbate and solvent data
+    Generate and optionally serialize all voxel grids for one molecular system.
+
+    The representation contains separate adsorbate and solvent channel groups,
+    giving 2 × N channels for N atomic features. Ten MD snapshots are processed,
+    and each snapshot is expanded into 24 symmetry-equivalent rotations.
     
     Each adsorbate contains snapshots 1-10 (fixed range).
     
     INPUTS:
         save_pickle: bool, whether to save the results to pickle file (default: True)
-        feature_list: list, atomic features list (note: for type_2, this refers to atomic_features, not including mol_type)
+        feature_list: list of atomic features; molecular identity is represented
+            by channel separation rather than an additional ``mol_type`` channel
         ... (other parameters same as before)
     
     OUTPUTS:
-        adsorbate_data: dict, processed data structure containing all grids with type_2 format
+        adsorbate_data: dict containing grids, labels, rotations, and metadata
         file_path: str, path to saved pickle file (None if save_pickle=False or saving failed)
     """
-    # For type_2, we use ATOMIC_FEATURES
+    # Use the manuscript's 14 atom-level features by default.
     if feature_list is None:
-        # Define atomic features for type_2 format (same as in generate_voxel_grids.py)
+        # Keep this order aligned with GenerateVoxelGrids and the trained model.
         feature_list = [
             'atom_type_C',
             'atom_type_H', 
@@ -88,12 +88,12 @@ def generate_and_store_adsorbate_grids(
     
     print(f"\n--- Processing {adsorbate}: snapshots {snapshot_start}-{snapshot_end-1}")
     
-    # Initialize data structure for type_2 format
+    # Initialize the system-level dataset and its reproducibility metadata.
     adsorbate_data = {
         'adsorbate': adsorbate,
         'snapshots': {},
         'metadata': {
-            'data_format': 'type_2',  # Explicitly mark as type_2
+            'data_format': 'separated_channels',
             'zeolite_type': zeolite_type,
             'solvent_type': solvent_type,
             'pore_type': pore_type,
@@ -130,7 +130,8 @@ def generate_and_store_adsorbate_grids(
         
         generate_voxel_grids = GenerateVoxelGrids(**input_vars)
         
-        # Set metadata from first snapshot (type_2 specific)
+        # Grid geometry and channel definitions are identical for all snapshots,
+        # so record them once from the first generated sample.
         if snapshot_index == snapshot_start:
             adsorbate_data['metadata']['grid_shape'] = generate_voxel_grids.voxel_grid.shape
             adsorbate_data['metadata']['feature_channel_mapping'] = generate_voxel_grids.feature_channel_mapping
@@ -138,7 +139,7 @@ def generate_and_store_adsorbate_grids(
             adsorbate_data['metadata']['element_types'] = getattr(generate_voxel_grids, 'element_types', None)
             adsorbate_data['metadata']['target_interaction_energy'] = generate_voxel_grids.target_interaction_energy
             
-            # Type_2 specific metadata
+            # Record the two channel-group ranges explicitly.
             total_channels = generate_voxel_grids.voxel_grid.shape[3]
             num_atomic_features = len(feature_list)
             adsorbate_data['metadata']['total_channels'] = total_channels
@@ -146,7 +147,8 @@ def generate_and_store_adsorbate_grids(
             adsorbate_data['metadata']['adsorbate_channels'] = f"0-{num_atomic_features-1}"
             adsorbate_data['metadata']['solvent_channels'] = f"{num_atomic_features}-{total_channels-1}"
             
-            print(f"    Type_2 metadata: {total_channels} channels ({num_atomic_features} adsorbate + {num_atomic_features} solvent)")
+            print(f"    Voxel metadata: {total_channels} channels "
+                  f"({num_atomic_features} adsorbate + {num_atomic_features} solvent)")
         
         # Apply augmentation (now returns augmented_data with labels)
         augmented_data, rotation_names = augment_voxel_grid(
@@ -165,17 +167,17 @@ def generate_and_store_adsorbate_grids(
             if np.sum(similarity_matrix) > 0:
                 print(f"Warning: found duplicate grids")
         
-        # Store snapshot data (adapted for type_2 format)
-        # Create augmented_data for storage (type_2 includes additional metadata)
+        # Retain the augmented grids together with the information needed to
+        # interpret their rotations, labels, and channel ordering.
         augmented_data_for_storage = []
         for item in augmented_data:
             storage_item = {
                 'voxel_grid': item['voxel_grid'],  # ML training grid
                 'rotation_name': item['rotation_name'],
                 'target_interaction_energy': item['target_interaction_energy'],
-                'data_format': item['data_format'],  # Type_2 specific
-                'feature_channel_mapping': item['feature_channel_mapping'],  # Type_2 specific
-                'atomic_features': item['atomic_features'],  # Type_2 specific
+                'data_format': item['data_format'],
+                'feature_channel_mapping': item['feature_channel_mapping'],
+                'atomic_features': item['atomic_features'],
             }
             augmented_data_for_storage.append(storage_item)
         
@@ -248,7 +250,7 @@ def check_all_pickle_files_exist(
         missing_files: list, list of missing file paths
     """
     if feature_list is None:
-        # For type_2, use atomic features (without mol_type)
+        # Use atom-level features; molecular identity is encoded by channel group.
         feature_list = [
             'atom_type_C', 'atom_type_H', 'atom_type_O', 'is_hydrophobic', 'is_donor', 'is_acceptor', 
             'is_hbonded', 'is_hbonded_donor', 'is_hbonded_acceptor', 'atom_mass', 'partial_charge', 
@@ -258,9 +260,9 @@ def check_all_pickle_files_exist(
     if output_dir is None:
         output_dir = get_paths('dataset_cnn')
     
-    # Calculate grid dimensions and shape string for type_2 format
+    # Calculate the expected spatial dimensions and channel count.
     max_bin_num = int(box_grids_size / box_increment)
-    # For type_2 format: total channels = 2 × number of atomic features (adsorbate + solvent groups)
+    # Each atomic feature appears once in each molecular channel group.
     num_features = 2 * len(feature_list)  # Each atomic feature appears in both groups
     voxel_shape_str = f"{max_bin_num}_{max_bin_num}_{max_bin_num}_{num_features}"
     
@@ -382,7 +384,7 @@ def check_all_pickles_complete(
     if adsorbates_by_env is None:
         adsorbates_by_env = ADSORBATES_BY_ENV
     if feature_list is None:
-        # For type_2, use atomic features (without mol_type)
+        # Use atom-level features; molecular identity is encoded by channel group.
         feature_list = [
             'atom_type_C', 'atom_type_H', 'atom_type_O', 'is_hydrophobic', 'is_donor', 'is_acceptor', 
             'is_hbonded', 'is_hbonded_donor', 'is_hbonded_acceptor', 'atom_mass', 'partial_charge', 
@@ -392,9 +394,9 @@ def check_all_pickles_complete(
     if output_dir is None:
         output_dir = get_paths('dataset_cnn')
     
-    # Calculate expected parameters for type_2 format
+    # Calculate the expected spatial dimensions and channel count.
     max_bin_num = int(box_grids_size / box_increment)
-    # For type_2 format: total channels = 2 × number of atomic features (adsorbate + solvent groups)
+    # Each atomic feature appears once in each molecular channel group.
     num_features = 2 * len(feature_list)  # Each atomic feature appears in both groups
     voxel_shape_str = f"{max_bin_num}_{max_bin_num}_{max_bin_num}_{num_features}"
     subdir_name = f"size_{box_grids_size:.1f}-box_{box_increment:.1f}-shape_{voxel_shape_str}"
@@ -761,7 +763,7 @@ if __name__ == "__main__":
     completeness_results = generate_complete_dataset(
         box_grids_size=16.0,
         box_increment=0.8,
-        feature_list=None,  # Will use type_2 atomic features by default
+        feature_list=None,  # Use the standard 14 atomic features.
         include_zeolite=False,
         include_solvent=True,
         include_adsorbate=True,
@@ -775,7 +777,7 @@ if __name__ == "__main__":
 
     # Test data validation (run in test mode if files exist)
     if test:
-        print(f"\n=== TYPE_2 DATA VALIDATION TEST ===")
+        print(f"\n=== VOXEL DATA VALIDATION TEST ===")
         
         if completeness_results['files_complete'] > 0:
             # Load one test file for validation
@@ -785,7 +787,7 @@ if __name__ == "__main__":
             
             # Calculate expected file path
             max_bin_num = int(16.0 / 0.8)  # box_grids_size / box_increment
-            num_features = 28  # 14 atomic features × 2 groups for type_2
+            num_features = 28  # 14 atomic features × 2 molecular groups
             voxel_shape_str = f"{max_bin_num}_{max_bin_num}_{max_bin_num}_{num_features}"
             
             output_dir = get_paths('dataset_cnn')
@@ -814,8 +816,8 @@ if __name__ == "__main__":
                 print(f"    Augmented[0] shape: {test_augmented_voxel.shape}, min: {test_augmented_voxel.min():.3f}, max: {test_augmented_voxel.max():.3f}, mean: {test_augmented_voxel.mean():.3f}")
                 print(f"    Are they identical? {np.array_equal(test_original_voxel, test_augmented_voxel)}")
                 
-                # Test type_2 channel separation
-                print(f"\n--- Type_2 Channel Separation Validation ---")
+                # Verify that adsorbate and solvent features occupy distinct groups.
+                print(f"\n--- Channel Separation Validation ---")
                 adsorbate_channels = test_original_voxel  # Channel 0: adsorbate atom_type_C
                 solvent_channels = adsorbate_data['snapshots'][1]['original_grid'][:,:,:,14]  # Channel 14: solvent atom_type_C
                 
@@ -835,7 +837,7 @@ if __name__ == "__main__":
                 print(f"    Target energy: {first_rotation['target_interaction_energy']:.3f} eV")
                 print(f"    Data format: {first_rotation.get('data_format', 'not specified')}")
                 
-                print(f"    ✓ Type_2 validation completed successfully!")
+                print(f"    ✓ Voxel-data validation completed successfully!")
                 
             except Exception as e:
                 print(f"    ✗ Test validation failed: {e}")
@@ -845,7 +847,3 @@ if __name__ == "__main__":
             print(f"    ✗ No complete files found for validation")
     else:
         print(f"\n--- Skipping validation test (test mode disabled) ---")
-    
-    
-    
-    
