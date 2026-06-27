@@ -1,24 +1,66 @@
 # -*- coding: utf-8 -*-
 """
+extract_lammpsdata_info.py
 
+Extract atom-level descriptors from the LAMMPS topology and sampled molecular
+dynamics (MD) configurations used by the voxel-generation workflow.
+
+For a selected zeolite, solvent composition, pore type, and adsorbate, this
+module reads ``data_nvt_samp_new.lammpsdata`` and the corresponding sampled
+trajectory through ``snapshotMDAnalysis`` in ``read_md_snapshot.py``. It
+provides the following information to ``generate_voxel_grids.py``:
+
+- Lennard-Jones epsilon and sigma values indexed by LAMMPS atom type;
+- adsorbate connectivity inferred from interatomic distances;
+- atom valence values for the adsorbate and solvent;
+- adsorbate hydrophobic-character indicators;
+- hydrogen-bond donor and acceptor capacity indicators.
+
+The module distinguishes hydrogen-bond *capacity* from hydrogen bonds that are
+actually formed in a snapshot. ``extract_is_donor_acceptor`` identifies O-H
+donor sites and oxygen acceptor sites from molecular connectivity. Instantaneous
+hydrogen-bond formation is evaluated separately in ``extract_hbonds.py``.
+
+Several dataset-specific conventions are required by the current workflow:
+
+1. solvent molecule IDs occupy 1-1200;
+2. the zeolite and adsorbate use molecule IDs 1201 and 1202, respectively;
+3. residue names assigned by ``read_md_snapshot.py`` are ``HOH`` for water,
+   ``MEO`` for methanol, and ``ADS`` for the adsorbate;
+4. atom names begin with their element symbol, for example ``C_ADS`` or
+   ``O_HOH``;
+5. each adsorbate geometry is fixed during MD sampling, so snapshot 1 is used
+   for connectivity properties that do not vary between snapshots.
+
+The public extraction functions return dictionaries in memory. They do not
+modify the LAMMPS data, trajectory files, or generated voxel datasets. Running
+this module directly executes donor/acceptor-capacity examples configured in the
+``__main__`` block.
 """
 
+# Standard-library path handling.
 import os
+
+# Numerical operations for coordinates, distances, and summary statistics.
 import numpy as np
 
-# Use MDAnalysis distance calculation to find water molecules near adsorbate
+# MDAnalysis periodic-distance calculations used to select nearby solvent
+# molecules around the adsorbate.
 from MDAnalysis.analysis import distances
 
-# Custom imports
+# Project utilities for repository paths and annotated LAMMPS snapshot loading.
 from core.path import get_paths
 from read_md_snapshot import snapshotMDAnalysis
 
 
 def _parse_solvent_composition(solvent_type):
     """
-    Parse solvent type and determine molecule ID ranges for different components.
-    Total solvent molecules is always 1200 (mol_ids 1-1200).
-    Zeolite is always mol_id 1201, adsorbate is always mol_id 1202.
+    Convert a supported solvent name into dataset-specific molecule-ID ranges.
+
+    All systems contain 1200 solvent molecules. Water is listed first, followed
+    by methanol when present; the zeolite and adsorbate IDs follow the solvent
+    block. These ranges describe the repository's LAMMPS construction and are
+    not intended as general LAMMPS conventions.
     
     INPUTS:
         solvent_type: str, solvent type (e.g. "water_pure", "methanol_120_water_1080")
@@ -79,7 +121,10 @@ def _parse_solvent_composition(solvent_type):
 
 def _is_solvent_molecule(mol_id, solvent_composition):
     """
-    Check if a molecule ID corresponds to a solvent molecule (water or methanol).
+    Check whether a molecule ID lies in a configured solvent range.
+
+    Both water and methanol count as solvent. Zeolite and adsorbate molecule IDs
+    therefore return False.
     
     INPUTS:
         mol_id: int, molecule ID to check
@@ -107,7 +152,12 @@ def extract_LJ_parameter_info(zeolite_type,
                               verbose = False):
     
     """
-    Extract specific LJ parameter (epsilon or sigma) from LAMMPS data file.
+    Extract epsilon or sigma values from the LAMMPS ``Pair Coeffs`` section.
+
+    The parser expects the repository's annotated coefficient format, in which
+    each data line contains ``atom_type epsilon sigma # atom_name``. Returned
+    values are keyed by integer LAMMPS atom type so they can be assigned to all
+    atoms of that type during voxel generation.
     
     INPUTS:
         zeolite_type: str, zeolite type (e.g. "FAU", "BEA", "MFI")
@@ -122,18 +172,19 @@ def extract_LJ_parameter_info(zeolite_type,
                                {atom_type_id: float}
     """
     
-    # Validate parameter input
+    # Restrict the public interface to the two columns present in Pair Coeffs.
     if parameter not in ['epsilon', 'sigma']:
         raise ValueError(f"Parameter must be 'epsilon' or 'sigma', got '{parameter}'")
     
-    # Get root directory for simulations
+    # Resolve the selected adsorbate directory under md_simulations.
     md_simulations = get_paths('simulation_path')
     
     # Construct simulation directory path
     folder_name = f"{solvent_type}-{pore_type}"
     sim_dir = os.path.join(md_simulations, zeolite_type, folder_name, adsorbate)
     
-    # Define path to LAMMPS data file
+    # The annotated data file contains topology, atom labels, and force-field
+    # coefficients shared by all ten sampled snapshots.
     path_lammpsdata = os.path.join(sim_dir, 'data_nvt_samp_new.lammpsdata')
     
     if verbose:
@@ -146,7 +197,8 @@ def extract_LJ_parameter_info(zeolite_type,
     with open(path_lammpsdata, 'r', encoding="utf-8") as lammpsdata:
         lines = lammpsdata.readlines()
         
-        # Find the "Pair Coeffs" section
+        # Locate the first coefficient line after the section header and its
+        # separating blank line.
         pair_coeffs_start = None
         for i, line in enumerate(lines):
             if line.strip().startswith("Pair Coeffs"):
@@ -159,7 +211,7 @@ def extract_LJ_parameter_info(zeolite_type,
         if verbose:
             print(f"    Found Pair Coeffs section at line {pair_coeffs_start}")
         
-        # Find the end of Pair Coeffs section
+        # Stop at the blank line or next non-numeric LAMMPS section header.
         pair_coeffs_end = None
         for i, line in enumerate(lines[pair_coeffs_start:]):
             if line.strip() == "" or not line.strip()[0].isdigit():
@@ -169,7 +221,7 @@ def extract_LJ_parameter_info(zeolite_type,
         if pair_coeffs_end is None:
             pair_coeffs_end = len(lines)
         
-        # Parse the Pair Coeffs lines
+        # Parse atom-type ID, epsilon, and sigma from each annotated row.
         for line_num in range(pair_coeffs_start, pair_coeffs_end):
             line = lines[line_num].strip()
             if not line or line.startswith('#'):
@@ -212,9 +264,12 @@ def get_adsorbate_bonds_info(zeolite_type,
                              adsorbate_mol_id=None,  # Optional - will be determined from solvent_type
                              verbose=False):
     """
-    Get the adsorbate bonds information using snapshotMDAnalysis.
-    Based on atoms distances, it will determine the bonds between atoms.
-    For adsorbate atoms only.
+    Infer adsorbate connectivity and valence from interatomic distances.
+
+    Only ``ADS`` atoms are considered. Candidate bonds are assigned using
+    element-pair cutoffs chosen for the C/H/O adsorbates in this dataset. The
+    resulting connectivity supports the valence, hydrophobicity, and
+    donor/acceptor-capacity descriptors returned elsewhere in this module.
     
     Note: Since adsorbate is fixed during MD simulation, we always use snapshot 1
     as all snapshots have identical adsorbate structure.
@@ -236,7 +291,7 @@ def get_adsorbate_bonds_info(zeolite_type,
                    'atom_id_to_type': dict mapping atom IDs to atom type IDs
     """
     
-    # Parse solvent composition to get adsorbate mol_id
+    # Resolve the standard adsorbate molecule ID unless explicitly overridden.
     solvent_composition = _parse_solvent_composition(solvent_type)
     if adsorbate_mol_id is None:
         adsorbate_mol_id = solvent_composition['adsorbate_mol_id']
@@ -247,7 +302,8 @@ def get_adsorbate_bonds_info(zeolite_type,
         print(f"    Note: Using snapshot 1 (adsorbate is fixed during MD simulation)")
         print(f"    Target molecule ID: {adsorbate_mol_id}")
     
-    # Create snapshotMDAnalysis instance (always use snapshot 1 since adsorbate is fixed)
+    # Load snapshot 1 because the adsorbate geometry is fixed across the ten
+    # sampled solvent configurations.
     snapshot_mda = snapshotMDAnalysis(
         zeolite_type=zeolite_type,
         solvent_type=solvent_type,
@@ -262,7 +318,8 @@ def get_adsorbate_bonds_info(zeolite_type,
     if verbose:
         print(f"    Successfully loaded universe with {len(universe.atoms)} atoms")
     
-    # Get adsorbate atoms using MDAnalysis selection
+    # Residue names assigned by read_md_snapshot.py provide a stable selection
+    # independent of absolute atom IDs.
     adsorbate_atoms = universe.select_atoms('resname ADS')
     
     if len(adsorbate_atoms) == 0:
@@ -271,9 +328,9 @@ def get_adsorbate_bonds_info(zeolite_type,
     if verbose:
         print(f"    Found {len(adsorbate_atoms)} adsorbate atoms")
     
-    # Comprehensive bond length cutoffs in Angstrom for organic molecules in dataset
-    # Based on DFT calculations and experimental data for alcohols, aldehydes, diols, etc.
-    # Slightly relaxed cutoffs to avoid missing bonds due to thermal motion in MD simulations
+    # Element-pair bond-length cutoffs in angstrom for the alcohols, aldehydes,
+    # diols, ethers, and related C/H/O adsorbates in the dataset. Margins above
+    # equilibrium bond lengths accommodate coordinate variation.
     bond_cutoffs = {
         # C-H bonds (different hybridizations)
         ('C', 'H'): 1.25,   # sp3 C-H: ~1.09 Å, sp2 C-H: ~1.08 Å, relaxed for MD
@@ -313,7 +370,8 @@ def get_adsorbate_bonds_info(zeolite_type,
             coords = atom_id_to_coords[atom_id]
             print(f"        Atom {atom_id} ({atom.name}): [{coords[0]:.3f}, {coords[1]:.3f}, {coords[2]:.3f}]")
     
-    # Detect bonds between adsorbate atoms
+    # Test each unique atom pair once and retain pairs within the corresponding
+    # element-specific cutoff.
     bonds = []
     atom_ids = list(atom_id_to_coords.keys())
     
@@ -328,7 +386,7 @@ def get_adsorbate_bonds_info(zeolite_type,
             element1 = atom_id_to_name[atom_id1].split('_')[0]
             element2 = atom_id_to_name[atom_id2].split('_')[0]
             
-            # Calculate distance
+            # Adsorbate coordinates are taken directly from the fixed snapshot.
             coords1 = atom_id_to_coords[atom_id1]
             coords2 = atom_id_to_coords[atom_id2]
             distance = np.linalg.norm(coords1 - coords2)
@@ -344,7 +402,7 @@ def get_adsorbate_bonds_info(zeolite_type,
                 if verbose:
                     print(f"        Bond detected: {atom_id1}({element1}) - {atom_id2}({element2}), distance: {distance:.3f} Å")
     
-    # Calculate valence for adsorbate atoms
+    # Define valence here as the number of inferred covalent neighbors.
     atom_id_to_valence = {}
     for atom_id in atom_ids:
         atom_id_to_valence[atom_id] = 0
@@ -379,8 +437,13 @@ def extract_total_valence_info(zeolite_type,
                                adsorbate,
                                verbose=False):
     """
-    Extract total valence information for each atom ID using MDAnalysis.
-    Only considers solvent (water/methanol) and adsorbate atoms, not zeolite.
+    Return the covalent-neighbor count for adsorbate and solvent atoms.
+
+    Zeolite atoms are intentionally excluded because the default voxel inputs
+    contain adsorbate and solvent channels. Adsorbate connectivity is inferred
+    with the same element-pair distance rules used by
+    ``get_adsorbate_bonds_info``. Water and methanol valences are counted from
+    the bond topology loaded from ``data_nvt_samp_new.lammpsdata``.
     
     For adsorbate: uses distance-based bond detection
     For solvent: uses MDAnalysis bond topology information
@@ -401,7 +464,8 @@ def extract_total_valence_info(zeolite_type,
         print(f"\n--- Extracting Total Valence Information (using MDAnalysis) ---")
         print(f"    System: {zeolite_type}-{solvent_type}-{pore_type}-{adsorbate}")
     
-    # Parse solvent composition
+    # Solvent composition determines whether the solvent selection contains only
+    # water or both water and methanol.
     solvent_composition = _parse_solvent_composition(solvent_type)
     
     # Create snapshotMDAnalysis instance (use snapshot 1 since adsorbate is fixed)
@@ -422,7 +486,7 @@ def extract_total_valence_info(zeolite_type,
     # Initialize valence dictionary
     atom_id_to_valence = {}
     
-    # ====== Part 1: Handle Adsorbate Atoms ======
+    # ====== Part 1: infer adsorbate connectivity from fixed coordinates ======
     if verbose:
         print(f"\n--- Processing adsorbate atoms...")
     
@@ -486,7 +550,7 @@ def extract_total_valence_info(zeolite_type,
             valence = atom_id_to_valence[atom_id]
             print(f"        Adsorbate atom {atom_id} ({element}): valence = {valence}")
     
-    # ====== Part 2: Handle Solvent Atoms ======
+    # ====== Part 2: count solvent bonds from the LAMMPS topology ======
     if verbose:
         print(f"\n--- Processing solvent atoms...")
     
@@ -518,7 +582,7 @@ def extract_total_valence_info(zeolite_type,
             print(f"    Using MDAnalysis bond topology ({len(universe.bonds)} total bonds)")
             print(f"    Processing bonds for {len(solvent_atom_ids)} solvent atoms...")
         
-        # Count bonds for each solvent atom - optimized version
+        # Count only bonds whose two endpoints both belong to the solvent set.
         bond_count = 0
         for bond in universe.bonds:
             atom1_id = int(bond.atoms[0].id)
@@ -573,8 +637,12 @@ def extract_is_hydrophobic_info(zeolite_type,
                                 adsorbate,
                                 verbose=False):
     """
-    Detect hydrophobic atoms only in adsorbate molecules.
-    Solvent molecules (water/methanol) are excluded as they don't contain hydrophobic atoms.
+    Assign the dataset's binary hydrophobic-character descriptor.
+
+    Hydrophobicity is defined from adsorbate connectivity rather than solvent
+    composition or pore type. Solvent atoms are retained in the returned map but
+    assigned zero by construction, matching the feature definition used in the
+    manuscript.
     
     Hydrophobic detection rules:
     1. C atoms are hydrophobic if they have no direct O neighbors
@@ -619,7 +687,7 @@ def extract_is_hydrophobic_info(zeolite_type,
     if verbose:
         print(f"    Successfully loaded universe with {len(universe.atoms)} atoms")
     
-    # Get adsorbate bonds information for connectivity analysis (using existing universe)
+    # Obtain the fixed adsorbate connectivity used to classify C and H atoms.
     adsorbate_bonds_info = get_adsorbate_bonds_info(
         zeolite_type, solvent_type, pore_type, adsorbate, verbose=verbose
     )
@@ -641,7 +709,7 @@ def extract_is_hydrophobic_info(zeolite_type,
     adsorbate_atom_ids = list(adsorbate_bonds_info['atom_id_to_name'].keys())
     atom_id_to_name = adsorbate_bonds_info['atom_id_to_name']
     
-    # Step 1: Identify hydrophobic C atoms (no direct O neighbors)
+    # Step 1: carbon is hydrophobic when none of its covalent neighbors is O.
     hydrophobic_c_atoms = set()
     
     if verbose:
@@ -669,7 +737,7 @@ def extract_is_hydrophobic_info(zeolite_type,
                 if verbose:
                     print(f"        C atom {atom_id}: hydrophilic (has O neighbor), neighbors: {neighbor_elements}")
     
-    # Step 2: Classify H atoms based on their neighbors
+    # Step 2: hydrogen inherits hydrophobic character only from a hydrophobic C.
     for atom_id in adsorbate_atom_ids:
         element = atom_id_to_name[atom_id].split('_')[0]
         
@@ -698,7 +766,7 @@ def extract_is_hydrophobic_info(zeolite_type,
                 if verbose:
                     print(f"        H atom {atom_id}: hydrophilic (unexpected {len(neighbors)} neighbors)")
     
-    # Step 3: All O atoms are hydrophilic
+    # Step 3: oxygen is always assigned zero in this binary feature.
     for atom_id in adsorbate_atom_ids:
         element = atom_id_to_name[atom_id].split('_')[0]
         
@@ -707,7 +775,8 @@ def extract_is_hydrophobic_info(zeolite_type,
             if verbose:
                 print(f"        O atom {atom_id}: hydrophilic (oxygen is always hydrophilic)")
     
-    # Add all solvent atoms as hydrophilic (using existing universe)
+    # Solvent atoms are included as explicit zeros so downstream atom-ID lookups
+    # do not require special missing-value handling.
     if verbose:
         print(f"    Adding solvent atoms as hydrophilic...")
     
@@ -769,7 +838,14 @@ def extract_is_donor_acceptor(zeolite_type,
                               r_cut=5.0,  # Cutoff distance in Angstrom for solvent selection
                               verbose=False):
     """
-    Detect H-bond donor and acceptor atoms in the system.
+    Assign hydrogen-bond donor and acceptor *capacity* indicators.
+
+    This function does not test hydrogen-bond distances or D-H-A angles. A donor
+    feature is placed on an H atom covalently connected to O, and an acceptor
+    feature is placed on O. Adsorbate atoms are always classified; solvent
+    capacity is classified for complete water or methanol molecules whose oxygen
+    lies within ``r_cut`` of any adsorbate heavy atom in the selected snapshot.
+    The periodic simulation box is used for this solvent-selection distance.
     
     ⚠️  IMPORTANT: This function identifies atoms with H-bond POTENTIAL, 
         not atoms currently involved in H-bonds. Perfect for voxel grid representation.
@@ -815,7 +891,7 @@ def extract_is_donor_acceptor(zeolite_type,
         print(f"    Snapshot: {snapshot_index}")
         print(f"    Solvent selection cutoff: {r_cut} Å from adsorbate heavy atoms")
     
-    # Get adsorbate bonds information for connectivity analysis (using MDAnalysis)
+    # Fixed adsorbate connectivity identifies hydroxyl H atoms and O acceptors.
     adsorbate_bonds_info = get_adsorbate_bonds_info(
         zeolite_type, solvent_type, pore_type, adsorbate, verbose=False
     )
@@ -847,7 +923,7 @@ def extract_is_donor_acceptor(zeolite_type,
     if verbose:
         print(f"    Found {len(adsorbate_atoms)} adsorbate atoms")
     
-    # Find adsorbate heavy atoms (non-H atoms) for distance calculation
+    # Solvent proximity is measured to any non-hydrogen adsorbate atom.
     adsorbate_heavy_atoms = adsorbate_atoms.select_atoms('not name H*')
     
     if len(adsorbate_heavy_atoms) == 0:
@@ -875,14 +951,14 @@ def extract_is_donor_acceptor(zeolite_type,
         if verbose:
             print(f"    Found {len(solvent_atoms)} total solvent atoms")
         
-        # Select solvent molecules within cutoff distance using MDAnalysis
-        # Get solvent oxygen atoms first (both water and methanol have oxygen)
+        # Use one representative oxygen per solvent molecule as the proximity
+        # site; both water and methanol contain exactly one oxygen.
         solvent_oxygens = solvent_atoms.select_atoms('name O*')
         
         if verbose:
             print(f"    Found {len(solvent_oxygens)} solvent oxygen atoms")
         
-        # Calculate distances between all solvent oxygens and all adsorbate heavy atoms
+        # distance_array applies the minimum-image convention through the box.
         dist_array = distances.distance_array(solvent_oxygens.positions,
                                               adsorbate_heavy_atoms.positions,
                                               box=universe.dimensions)
@@ -897,7 +973,7 @@ def extract_is_donor_acceptor(zeolite_type,
         # Get the molecule IDs (residue IDs) of these solvent molecules and convert to int
         solvent_mol_ids_near_adsorbate = set(int(resid) for resid in close_solvent_oxygens.resids)
         
-        # Get all atoms from selected solvent molecules
+        # Expand each selected oxygen to its complete parent solvent molecule.
         if solvent_mol_ids_near_adsorbate:
             selected_solvent_atoms = solvent_atoms.select_atoms(f'resid {" ".join(map(str, solvent_mol_ids_near_adsorbate))}')
             # Convert atom IDs to int
@@ -909,7 +985,7 @@ def extract_is_donor_acceptor(zeolite_type,
         print(f"    Selected {len(solvent_mol_ids_near_adsorbate)} solvent molecules within {r_cut} Å")
         print(f"    Total selected solvent atoms: {len(selected_solvent_atom_ids)}")
     
-    # Build connectivity for solvent molecules (water and methanol)
+    # Build only the O-H connectivity needed by donor/acceptor-capacity features.
     solvent_connectivity = {}
     
     # For each selected solvent molecule, find O-H bonds
@@ -935,8 +1011,8 @@ def extract_is_donor_acceptor(zeolite_type,
                 solvent_connectivity[o_id] = [h1_id, h2_id]
                 
         elif len(solvent_mol_atoms) == 6:
-            # Methanol molecule: 1 C + 1 O + 4 H
-            # Only the O-H bond is relevant for H-bonding, not C-H bonds
+            # Methanol contains one hydroxyl H and three methyl H atoms. Only the
+            # hydroxyl O-H pair contributes to this feature.
             c_atoms = solvent_mol_atoms.select_atoms('name C*')
             o_atoms = solvent_mol_atoms.select_atoms('name O*')
             h_atoms = solvent_mol_atoms.select_atoms('name H*')
@@ -947,8 +1023,8 @@ def extract_is_donor_acceptor(zeolite_type,
                 o_id = int(o_atoms.ids[0])
                 h_ids = [int(h_id) for h_id in h_atoms.ids]
                 
-                # Determine which H is bonded to O (hydroxyl H) vs C (methyl H)
-                # Use distance-based detection
+                # Distinguish the hydroxyl H from methyl H atoms by comparing
+                # distances to the molecule's O and C atoms.
                 o_pos = o_atoms.positions[0]
                 c_pos = c_atoms.positions[0]
                 
@@ -984,7 +1060,8 @@ def extract_is_donor_acceptor(zeolite_type,
     atom_id_to_is_donor = {}
     atom_id_to_is_acceptor = {}
     
-    # Process all atoms in the universe and convert to int
+    # Initialize all atom IDs, including zeolite and distant solvent atoms, to
+    # zero so the returned dictionaries support direct downstream lookup.
     for atom_id in universe.atoms.ids:
         atom_id_int = int(atom_id)  # Convert numpy.int64 to int
         atom_id_to_is_donor[atom_id_int] = 0
@@ -1000,7 +1077,7 @@ def extract_is_donor_acceptor(zeolite_type,
         adsorbate_connectivity[atom_id1].append(atom_id2)
         adsorbate_connectivity[atom_id2].append(atom_id1)
     
-    # Detect donors and acceptors in adsorbate
+    # Classify adsorbate donor H atoms and acceptor O atoms.
     donor_count_ads = 0
     acceptor_count_ads = 0
     
@@ -1029,7 +1106,7 @@ def extract_is_donor_acceptor(zeolite_type,
             if verbose:
                 print(f"        Adsorbate acceptor: O atom {atom_id}")
     
-    # Detect donors and acceptors in selected solvent molecules
+    # Apply the same capacity definition to the selected solvent molecules.
     donor_count_water = 0
     acceptor_count_water = 0
     donor_count_methanol = 0
@@ -1114,11 +1191,11 @@ def extract_is_donor_acceptor(zeolite_type,
 
 if __name__ == "__main__":
     
-    # Example usage - test with mixed solvent system
+    # Example configuration used by the optional checks below.
     zeolite_type = 'FAU'
-    solvent_type = 'methanol_120_water_1080'  # Test with mixed solvent
+    solvent_type = 'methanol_240_water_960-hydrophilic'  # Test with mixed solvent
     pore_type = 'hydrophilic'
-    adsorbate = '01_methanol'
+    adsorbate = '02_01_02_propanol'
     
     # print("=== Testing LJ Parameter Extraction ===")
     # atom_type_to_epsilon = extract_LJ_parameter_info(zeolite_type,
@@ -1159,7 +1236,7 @@ if __name__ == "__main__":
     
     print("\n=== Testing H-bond Donor/Acceptor Information ===")
     
-    # Test 1: Pure water system
+    # Example 1: donor/acceptor capacity in a pure-water snapshot.
     print("\n--- Test 1: Pure Water System ---")
     solvent_type = 'water_pure'
     hbond_capacity_info = extract_is_donor_acceptor(zeolite_type,
@@ -1170,7 +1247,7 @@ if __name__ == "__main__":
                                            r_cut=5.0,
                                            verbose=True)
     
-    # Test 2: Mixed solvent system
+    # Example 2: donor/acceptor capacity in a methanol-water snapshot.
     print("\n--- Test 2: Mixed Solvent System ---")
     solvent_type = 'methanol_120_water_1080'
     hbond_capacity_info = extract_is_donor_acceptor(zeolite_type,
@@ -1180,7 +1257,6 @@ if __name__ == "__main__":
                                            snapshot_index=1,
                                            r_cut=5.0,
                                            verbose=True)
-
 
 
 
