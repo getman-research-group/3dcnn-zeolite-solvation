@@ -75,11 +75,5 @@ Within each CP2K calculation directory:
 - `*.xyz` contains the atomic coordinates used in the calculation.
 - `BASIS_file`, `POTENTIALS_file`, and `dftd3.dat` provide the basis sets,
   pseudopotentials, and dispersion parameters required by the CP2K input.
-- `sub_*.sh` is the Slurm submission script used on the original computing
-  cluster.
-- `slurm-*.out` and `rfm_cp2k_test_mpi_job.err` are job-scheduler log files.
-- `00-OUTPUT/` contains archived calculation inputs and outputs, including the
-  CP2K output (`*.out`) and, where applicable, the converged geometry.
-
-The Slurm scripts retain settings specific to the original computing
-environment and may require adaptation before use on another cluster.
+- `00-OUTPUT/` contains the CP2K output (`*.out`) and, for geometry
+  optimizations, the final converged structure (`*_converged.xyz`).
