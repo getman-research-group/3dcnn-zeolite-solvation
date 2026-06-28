@@ -1,34 +1,35 @@
 """
 plot_attention_results.py
 
-Enhanced spatial attention visualization script for 3D CNN models
-trained on zeolite-adsorbate solvation energy prediction.
+Visualize spatial attention maps from the trained 3D CNN model for one
+representative zeolite-solvation sample. This streamlined script loads a saved
+cross-validation results pickle, identifies which training folds contain the
+requested sample, retrieves the corresponding voxel grid from the dataset
+pickle, extracts spatial attention maps from the three CBAM-based modules, and
+plots a single publication-style attention heatmap figure.
 
-This script focuses on visualizing CBAM spatial attention maps from 
-the dual-branch 3D CNN architecture with comprehensive analysis.
+Current workflow
+----------------
+1. Load the saved model-results pickle from ``output_model_cnn``.
+2. Find the requested sample in the stored training-set tables.
+3. Load the matching voxel grid from ``dataset_cnn``.
+4. Extract spatial attention maps from the adsorbate branch, solvent branch,
+   and interaction-attention module.
+5. Average the attention maps across the folds where the sample appears in the
+   training set.
+6. Save the final attention heatmap figure for the selected XY, XZ, or YZ
+   plane.
 
-Features:
-- Extracts spatial attention from all 3 CBAM layers
-- Provides detailed center vs edge attention analysis  
-- Generates multi-view 3D orthogonal slice visualizations
-- Includes radial attention distribution analysis
-- Explains 'center-low, edge-high' attention patter        # Create filename using direct parameters
-        filename = f"spatial_attention_4fold-{zeolite}-{env}-{pore_type}-{adsorbate}-snap{snapshot}-vox{voxel_id}.png"
-        
-        save_path = os.path.join(self.output_dir, filename)ge:
-    python plot_attention_results.py
+Main output
+-----------
+- ``figure_7-attention_heatmaps.png``
 
-Output:
-    - Detailed spatial attention analysis plots
-    - 3D ort        print(f"🎯 3D CONCLUSION:")
-        print(f"   3D voxel plots reveal spatial attention patterns in full 3D context,")
-        print(f"   showing exactly where the model focuses within the voxel grid space.")
-        print(f"   High-attention regions are visualized as filled colored cubes.")
-        print(f"   This provides an intuitive representation of molecular interaction zones.")
-        print("="*80)al slice views showing model focus regions
-    - Quantitative attention pattern statistics
-
-Author: Zeolite ML Project
+Notes
+-----
+- The results pickle may have been created on GPU hardware, so this script
+  loads model objects onto CPU when needed.
+- The requested voxel-grid pickle must exist in ``dataset_cnn`` for the chosen
+  zeolite / environment / adsorbate combination.
 """
 
 import os
@@ -36,13 +37,9 @@ import pickle
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
 
 # Import your modules - Updated for dual-branch architecture
-from model_3d_cnn import AttentionCNN
-from train_3d_cnn import VoxelDataset, CNN3DTrainer
 from core.path import get_paths
-from core.global_vars import ZEOLITE_TYPES, ADSORBATES_BY_ENV
 
 
 
