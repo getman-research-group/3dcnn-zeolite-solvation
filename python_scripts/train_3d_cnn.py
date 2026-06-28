@@ -369,6 +369,25 @@ class CNN3DTrainer:
     def _get_random_splits(self):
         """Get random splits using GroupKFold (current method)"""
         from sklearn.model_selection import GroupKFold
+
+        unique_groups = np.unique(self.env_adsorbate_groups)
+        num_groups = len(unique_groups)
+
+        if num_groups < 5:
+            if self.test_mode:
+                if self.verbose:
+                    print(f"Random Split: test-mode fallback because only {num_groups} group(s) are available")
+
+                num_samples = len(self.X_data)
+                test_size = max(1, int(round(num_samples * 0.2)))
+                test_idx = np.arange(num_samples - test_size, num_samples)
+                train_idx = np.arange(0, num_samples - test_size)
+                return [(train_idx, test_idx)]
+
+            raise ValueError(
+                f"Random split requires at least 5 groups, but only {num_groups} "
+                f"group(s) are available in the loaded dataset."
+            )
         
         group_kfold = GroupKFold(n_splits=5, shuffle=True, random_state=self.random_state)
         splits = list(group_kfold.split(self.X_data, self.y_data, self.env_adsorbate_groups))
@@ -500,8 +519,7 @@ class CNN3DTrainer:
             'model_config': {
                 'input_channels': 28,
                 'test_mode': self.test_mode,
-                'random_state': self.random_state,
-                'dropout_rate': 0.25
+                'random_state': self.random_state
             }
         }
         
@@ -539,26 +557,7 @@ class CNN3DTrainer:
     def print_fold_completion_analysis(self, fold_idx, train_metrics, test_metrics, 
                                      train_env_adsorbates, test_env_adsorbates, monitoring_data):
         """Print detailed analysis when a fold is completed"""
-        
-        # First, print complete epoch history for easy copying
-        print(f"\n{'='*80}")
-        print(f"📋 FOLD {fold_idx + 1}/{self.n_folds} EPOCH HISTORY")
-        print(f"{'='*80}")
-        
-        if monitoring_data and 'epoch_history' in monitoring_data:
-            epoch_history = monitoring_data['epoch_history']
-            if epoch_history:
-                print("# Epoch-by-epoch training log:")
-                for epoch_info in epoch_history:
-                    print(epoch_info['log_line'])
-                print(f"# Training completed after {len(epoch_history)} epochs")
-            else:
-                print("# No epoch history available")
-        else:
-            print("# No epoch history available in monitoring data")
-        
-        print(f"{'='*80}")
-        
+
         print(f"\n{'='*60}")
         print(f"🎯 FOLD {fold_idx + 1}/{self.n_folds} COMPLETION ANALYSIS")
         print(f"{'='*60}")
@@ -585,7 +584,6 @@ class CNN3DTrainer:
             print(f"  Epochs completed: {final_analysis.get('total_epochs', 'N/A')}")
             print(f"  Final overfitting ratio: {final_analysis.get('final_overfitting_ratio', 'N/A'):.2f}")
             print(f"  Max overfitting ratio: {final_analysis.get('max_overfitting_ratio', 'N/A'):.2f}")
-            print(f"  Average gradient norm: {final_analysis.get('avg_gradient_norm', 'N/A'):.4f}")
             print(f"  Samples per parameter: {final_analysis.get('samples_per_param', 'N/A'):.1f}")
         
         # Loss trend analysis
@@ -622,17 +620,6 @@ class CNN3DTrainer:
                 print(f"  Best test loss: {best_test_loss:.4f} at epoch {best_test_epoch + 1}")
                 print(f"  Performance degradation: {final_test_loss - best_test_loss:.4f}")
         
-        # Feature importance summary (if available in monitoring data)
-        if monitoring_data and 'feature_importance' in monitoring_data:
-            feat_importance = monitoring_data['feature_importance']
-            print(f"\n🌟 Key Features (Top 3):")
-            # Use dynamically loaded feature names
-            feature_names = getattr(self, 'feature_names', None)
-            top_indices = np.argsort(feat_importance)[-3:][::-1]
-            for i, idx in enumerate(top_indices):
-                feat_name = feature_names[idx] if idx < len(feature_names) else f"feat_{idx}"
-                print(f"  {i+1}. {feat_name}: {feat_importance[idx]:.4f}")
-        
         print(f"{'='*60}\n")
     
     
@@ -653,7 +640,7 @@ class CNN3DTrainer:
             
             model = AttentionCNN(
                 in_channels=28,
-                dropout_rate=model_config.get('dropout_rate', 0.25),
+                dropout_rate=0.10,
                 feature_names=feature_names
             )
             if self.verbose:
@@ -1079,7 +1066,8 @@ class CNN3DTrainer:
         
         # Get splits based on split_type
         splits = self.get_cv_splits()
-        # Note: self.n_folds already set in __init__ based on split_type
+        # Use the actual number of generated splits, which may differ in test-mode fallback.
+        self.n_folds = len(splits)
         
         # Check for existing models
         if not self.retrain and self.check_existing_models():
@@ -1275,10 +1263,8 @@ class CNN3DTrainer:
                 if 'final_analysis' in monitor_data:
                     final_analysis = monitor_data['final_analysis']
                     epochs_completed = final_analysis.get('total_epochs', 'N/A')
-                    avg_grad_norm = final_analysis.get('avg_gradient_norm', 0)
                     samples_per_param = final_analysis.get('samples_per_param', 0)
                     print(f"    Training details: {epochs_completed} epochs, "
-                          f"grad_norm={avg_grad_norm:.4f}, "
                           f"samples/param={samples_per_param:.1f}")
         
         print(f"\n📈 Cross-Validation Performance Summary:")
@@ -1464,15 +1450,8 @@ def get_dataset_config(args):
     
     if args.test_mode:
         adsorbates_by_env = {
-            'water_pure-hydrophilic': [
-                '01_methanol',
-                '02_propanol',
-                '03_01_1_3_propanediol',
-                '04_04_glycerol',
-                '05_3c_aldehyde',
-            ],
             'methanol_240_water_960-hydrophilic': [
-                '01_methanol'  # Test mixed solvent system
+                '02_01_02_propanol'
             ]
         }
     else:
