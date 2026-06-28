@@ -477,19 +477,19 @@ class SpatialAttentionAnalyzer:
         
         # Helper function to extract plane slice based on view_angle
         def get_plane_slice(data_3d, plane):
-            """Extract plane slice - average of middle two layers for even grids"""
+            """Extract plane slice by averaging the four central layers of an even-sized grid."""
             d, h, w = data_3d.shape
-            # For even-sized grids (20x20x20), take average of two middle layers
-            # Indices 9 and 10 are the true center for a grid of size 20
+            # For a 20×20×20 grid, average the four layers nearest the center:
+            # indices 8, 9, 10, and 11.
             if plane == 'YZ':
-                mid1, mid2 = d//2 - 1, d//2  # indices 9, 10
-                return (data_3d[mid1, :, :] + data_3d[mid2, :, :]) / 2.0
+                center_layers = data_3d[d//2 - 2:d//2 + 2, :, :]
+                return np.mean(center_layers, axis=0)
             elif plane == 'XZ':
-                mid1, mid2 = h//2 - 1, h//2  # indices 9, 10
-                return (data_3d[:, mid1, :] + data_3d[:, mid2, :]) / 2.0
+                center_layers = data_3d[:, h//2 - 2:h//2 + 2, :]
+                return np.mean(center_layers, axis=1)
             else:  # XY
-                mid1, mid2 = w//2 - 1, w//2  # indices 9, 10
-                return (data_3d[:, :, mid1] + data_3d[:, :, mid2]) / 2.0
+                center_layers = data_3d[:, :, w//2 - 2:w//2 + 2]
+                return np.mean(center_layers, axis=2)
         
         # Create heatmap-only visualization
         # Layout: 1 row × 3 columns (one column per module)
