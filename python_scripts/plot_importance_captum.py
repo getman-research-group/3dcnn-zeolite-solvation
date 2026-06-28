@@ -26,7 +26,7 @@ from captum.attr import LayerConductance, LayerActivation, LayerGradientXActivat
 from captum.attr._utils.attribution import Attribution
 
 from core.path import get_paths
-from model_3d_cnn_2_8 import AttentionCNN_2_8
+from model_3d_cnn import AttentionCNN
 
 
 feature_map = {
@@ -467,10 +467,10 @@ class ImportanceMapAnalyzer:
         Extract model prefix from results filename for consistent plot naming
         
         Args:
-            results_filename: e.g., "model_2_8-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+            results_filename: e.g., "model-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
         
         Returns:
-            str: model prefix, e.g., "model_2_8-random-2546229"
+            str: model prefix, e.g., "model-random-2546229"
         """
         # Remove .pkl extension
         base_name = results_filename.replace('.pkl', '')
@@ -1083,7 +1083,7 @@ class ImportanceMapAnalyzer:
         try:
             # Always map to CPU first, then move to target device
             checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
-            model = AttentionCNN_2_8(in_channels=28)
+            model = AttentionCNN(in_channels=28)
             
             # Handle potential state dict mismatches for dynamically created layers
             model_state_dict = checkpoint['model_state_dict']
@@ -2230,32 +2230,32 @@ class ImportanceMapAnalyzer:
 if __name__ == "__main__":
     
     # Model results file
-    # results_filename = "model_2_8-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.091
-    # results_filename = "model_2_8-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
-    # results_filename = "model_2_8-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model_2_8-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model_2_8-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
-    # results_filename = "model_2_8-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.085
-    # results_filename = "model_2_8-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model_2_8-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    results_filename = "model_2_8-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
-    # results_filename = "model_2_8-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
-    # results_filename = "model_2_8-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model_2_8-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model_2_8-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model_2_8-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
-    # results_filename = "model_2_8-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model_2_8-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084 # Best
-    # results_filename = "model_2_8-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    # results_filename = "model-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.091
+    # results_filename = "model-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
+    # results_filename = "model-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # results_filename = "model-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # results_filename = "model-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    # results_filename = "model-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.085
+    # results_filename = "model-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # results_filename = "model-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    results_filename = "model-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
+    # results_filename = "model-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
+    # results_filename = "model-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # results_filename = "model-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # results_filename = "model-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # results_filename = "model-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
+    # results_filename = "model-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # results_filename = "model-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084 # Best
+    # results_filename = "model-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
     
     # Initialize analyzer and run analysis
     analyzer = ImportanceMapAnalyzer(results_filename=results_filename,
