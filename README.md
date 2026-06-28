@@ -96,7 +96,7 @@ and can be overridden with the `ZEOLITE_SOLVATION_PATH` environment variable.
 The main workflow is:
 
 1. Prepare energy-label tables in `database/`.
-2. Extract molecular descriptors and hydrogen-bond information from the MD
+2. Extract molecular features and hydrogen-bond information from the MD
    configurations, then generate and augment the voxel representations.
 3. Serialize the voxel grids to `dataset_cnn/` with
    `store_grids_pickle.py`.
