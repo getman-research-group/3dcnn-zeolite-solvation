@@ -692,28 +692,30 @@ if __name__ == "__main__":
     print("=== VoxelGridsLoader Demo ===")
     
     ############# TESTING PARAMETERS #############
-    test_code = True    # True for testing, False for full dataset
+    test_code = True    # True for one selected dataset, False for full dataset
+    test_zeolite = 'FAU'
+    test_environment = 'methanol_240_water_960-hydrophilic'
+    test_adsorbate = '02_01_02_propanol'
     ##############################################
 
     if test_code:
-        # Test with limited dataset including mixed solvent systems
-        ZEOLITE_TYPES = ['FAU']
-        ADSORBATES_BY_ENV = {
-            'water_pure-hydrophilic': ['01_methanol', '02_propanol'],
-            'water_pure-hydrophobic': ['01_methanol'],
-            'methanol_240_water_960-hydrophilic': ['01_methanol']  # New mixed solvent system
-        }
-        print("    Running in TEST mode with limited dataset (including mixed solvents)")
+        zeolite_types = [test_zeolite]
+        adsorbates_by_env = {test_environment: [test_adsorbate]}
+        print("    Running in TEST mode with one selected dataset")
+        print(f"    Zeolite: {test_zeolite}")
+        print(f"    Environment: {test_environment}")
+        print(f"    Adsorbate: {test_adsorbate}")
     else:
-        # Use full dataset
+        zeolite_types = ZEOLITE_TYPES
+        adsorbates_by_env = ADSORBATES_BY_ENV
         print("    Running with FULL dataset")
     
-    print(f"    Testing environments: {list(ADSORBATES_BY_ENV.keys())}")
+    print(f"    Environments to load: {list(adsorbates_by_env.keys())}")
     
     # Initialize loader
     loader = VoxelGridsLoader(
-        zeolite_types=ZEOLITE_TYPES,
-        adsorbates_by_env=ADSORBATES_BY_ENV,
+        zeolite_types=zeolite_types,
+        adsorbates_by_env=adsorbates_by_env,
         box_grids_size=16.0,
         box_increment=0.8,
         num_features=28,
@@ -737,4 +739,5 @@ if __name__ == "__main__":
     
     # Show detailed information
     if test_code:
-        loader.show_dataset_details()
+        dataset_key = f"{test_zeolite}-{test_environment}-{test_adsorbate}"
+        loader.show_dataset_details(dataset_key=dataset_key)
