@@ -7,6 +7,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Spyder project settings
+/.spyproject
+
 # Python environments and local environment variables
 .venv/
 venv/
@@ -35,5 +38,7 @@ htmlcov/
 *.swp
 *.swo
 *~
+
+# Voxel grids pkl files (over 100MB, not suitable for GitHub)
 dataset_cnn/size_16.0-box_0.8-shape_20_20_20_28/FAU-methanol_240_water_960-hydrophilic-02_01_02_propanol-size_16.0-box_0.8-shape_20_20_20_28.pkl
-/.spyproject
+dataset_cnn/size_16.0-box_0.8-shape_20_20_20_28/FAU-water_pure-hydrophilic-11_01_propylene_glycol-size_16.0-box_0.8-shape_20_20_20_28.pkl
