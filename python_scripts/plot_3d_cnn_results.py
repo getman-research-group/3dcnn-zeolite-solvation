@@ -2020,7 +2020,7 @@ class CNN3DResultsExtractor:
             # Extract job code from pkl_name
             parts = self.pkl_name.split('-')
             job_code = '-'.join(parts[:3])
-            file_name = f"{job_code}-{self.split_type}-bar_plot_no_tta.png"
+            file_name = f"SI_figure_5_1-performance_bar_plot.png"
             save_path = os.path.join(self.output_figure_path, 'cnn_results', file_name)
             plt.savefig(save_path, dpi=1000, bbox_inches='tight')
             if self.verbose:
@@ -2076,8 +2076,7 @@ if __name__ == "__main__":
     #                                                save_plot=True)
     
     
-    
-    # # Generate no-TTA parity plot with three subplots including MD comparison - Vertical layout
+    # # Generate Manuscript parity plot with three subplots including MD comparison
     # extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
     #     linear_fit=True,
     #     confidence_band=True,
@@ -2091,10 +2090,9 @@ if __name__ == "__main__":
     # )
     
     
-    
-    # # Generate comprehensive performance bar plot (no TTA)
-    # extractor.plot_bar_plot_performance_no_test_augment(show_plot=False,
-    #                                                     save_plot=True)
+    # Generate comprehensive performance bar plot (no TTA)
+    extractor.plot_bar_plot_performance_no_test_augment(show_plot=False,
+                                                        save_plot=True)
 
 
     # extractor.plot_graphic_abstract_parity_plot(
