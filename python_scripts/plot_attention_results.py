@@ -609,6 +609,6 @@ if __name__ == "__main__":
         snapshot=snapshot_index,
         voxel_id=voxel_id,
         view_angle='XY', # 'XY', 'XZ', 'YZ'
-        show_plots=False,
-        save_fig=True, # True
+        show_plots=True,
+        save_fig=False, # True
     )
