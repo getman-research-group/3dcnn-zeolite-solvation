@@ -44,19 +44,6 @@ If the pickle already exists and you want to rebuild it, add:
 --force-regenerate
 ```
 
-## Generate all configured pickles
-
-To generate the full voxel-grid dataset defined in `core/global_vars.py`, run:
-
-```bash
-python python_scripts/store_grids_pickle.py --all
-```
-
-To force regeneration of every configured pickle:
-
-```bash
-python python_scripts/store_grids_pickle.py --all --force-regenerate
-```
 
 ## Output location
 
