@@ -1274,29 +1274,6 @@ class CNN3DTrainer:
             else:
                 print(f"  ✓ Reasonable early stopping pattern")
         
-        # Attention mechanism effectiveness summary
-        print(f"\n🔍 Attention Mechanism Summary:")
-        print("-" * 40)
-        
-        attention_effectiveness_scores = []
-        for i in range(self.n_folds):
-            fold_score = test_r2s[i]
-            attention_effectiveness_scores.append(fold_score)
-        
-        avg_attention_score = np.mean(attention_effectiveness_scores)
-        print(f"  Average attention effectiveness score: {avg_attention_score:.3f}")
-        
-        if avg_attention_score > 0.8:
-            print(f"  🎉 Attention mechanism appears highly effective!")
-            print(f"     • Performance is consistently strong across folds")
-        elif avg_attention_score > 0.5:
-            print(f"  ✓ Attention mechanism working reasonably well")
-        else:
-            print(f"  ⚠️  Attention mechanism may need optimization:")
-            print(f"     • Consider different attention architectures")
-            print(f"     • Adjust attention parameters")
-            print(f"     • Validate attention weight patterns")
-
         avg_test_rmse = np.mean(test_rmses)
         print(f"\n📋 Performance Context:")
         print(f"  Current average test RMSE: {avg_test_rmse:.4f} eV")
