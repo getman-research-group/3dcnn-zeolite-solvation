@@ -563,13 +563,11 @@ class CNN3DTrainer:
         print(f"{'='*60}")
         
         # Performance metrics
-        overfitting_ratio = (test_metrics['rmse']**2) / (train_metrics['rmse']**2) if train_metrics['rmse'] > 0 else float('inf')
         generalization_gap = test_metrics['rmse'] - train_metrics['rmse']
         
         print(f"📊 Performance Metrics:")
         print(f"  Train: RMSE={train_metrics['rmse']:.4f}, R²={train_metrics['r2']:.4f}, MAE={train_metrics['mae']:.4f}")
         print(f"  Test:  RMSE={test_metrics['rmse']:.4f}, R²={test_metrics['r2']:.4f}, MAE={test_metrics['mae']:.4f}")
-        print(f"  Overfitting ratio: {overfitting_ratio:.2f}")
         print(f"  Generalization gap: {generalization_gap:.4f}")
         
         # Data split analysis
@@ -582,8 +580,6 @@ class CNN3DTrainer:
             final_analysis = monitoring_data['final_analysis']
             print(f"\n🔬 Training Dynamics Analysis:")
             print(f"  Epochs completed: {final_analysis.get('total_epochs', 'N/A')}")
-            print(f"  Final overfitting ratio: {final_analysis.get('final_overfitting_ratio', 'N/A'):.2f}")
-            print(f"  Max overfitting ratio: {final_analysis.get('max_overfitting_ratio', 'N/A'):.2f}")
             print(f"  Samples per parameter: {final_analysis.get('samples_per_param', 'N/A'):.1f}")
         
         # Loss trend analysis
@@ -605,9 +601,7 @@ class CNN3DTrainer:
                 print(f"  Train loss improvement: {train_improvement:.4f} ({early_train:.4f} → {late_train:.4f})")
                 print(f"  Test loss improvement: {test_improvement:.4f} ({early_test:.4f} → {late_test:.4f})")
                 
-                if train_improvement > 0.5 and test_improvement < 0.1:
-                    print(f"  ⚠️  Strong overfitting pattern detected during training")
-                elif train_improvement < 0.05 and test_improvement < 0.05:
+                if train_improvement < 0.05 and test_improvement < 0.05:
                     print(f"  ⚠️  Learning stagnation - both losses stopped improving")
                 elif test_improvement > train_improvement * 0.3:
                     print(f"  ✓ Healthy learning pattern - test follows train")
@@ -776,8 +770,6 @@ class CNN3DTrainer:
         train_losses = []
         test_losses = []
         learning_rates = []
-        overfitting_ratios = []
-
         if self.verbose:
             print(f"    🎯 OPTIMIZED Training Strategy (for LR=0.0002 slow convergence):")
             print(f"      Learning rate: {self.learning_rate:.6f}")
@@ -817,9 +809,6 @@ class CNN3DTrainer:
             test_loss /= len(test_eval_loader)
             test_losses.append(test_loss)
 
-            overfitting_ratio = test_loss / train_loss if train_loss > 0 else float('inf')
-            overfitting_ratios.append(overfitting_ratio)
-
             current_lr = optimizer.param_groups[0]['lr']
             learning_rates.append(current_lr)
             old_lr = current_lr
@@ -848,14 +837,6 @@ class CNN3DTrainer:
                     print(f"  Current test loss: {test_loss:.4f}")
                 break
 
-            overfitting_status = ""
-            if overfitting_ratio > 2.0:
-                overfitting_status = " ⚠️ OVERFIT"
-            elif overfitting_ratio > 1.5:
-                overfitting_status = " ⚡MILD_OVERFIT"
-            elif overfitting_ratio < 1.1:
-                overfitting_status = " ✓GOOD_FIT"
-
             if new_lr < 5e-7:
                 if self.verbose:
                     print(f"\n{'─' * 80}")
@@ -869,7 +850,6 @@ class CNN3DTrainer:
                 epoch_log_line = (
                     f"  Epoch {epoch + 1:3d}/{self.epochs}: "
                     f"Train={train_loss:.4f}, Test={test_loss:.4f} {improvement_flag}, "
-                    f"Ratio={overfitting_ratio:.2f}{overfitting_status}, "
                     f"LR={old_lr:.6f}{lr_change}, "
                     f"Patience={patience_counter}/{early_stop_patience}"
                 )
@@ -892,13 +872,8 @@ class CNN3DTrainer:
             print(f"{'─' * 80}")
             print(f"  Completed all {self.epochs} epochs without early stopping")
 
-        final_overfitting_ratio = overfitting_ratios[-1] if overfitting_ratios else 0
-        max_overfitting_ratio = max(overfitting_ratios) if overfitting_ratios else 0
-
         if self.verbose:
             print("    🔍 Final Training Analysis:")
-            print(f"      Final overfitting ratio: {final_overfitting_ratio:.2f}")
-            print(f"      Max overfitting ratio: {max_overfitting_ratio:.2f}")
             print(f"      Epochs completed: {epoch + 1}/{self.epochs}")
             print("    📈 Loss Convergence Analysis:")
             if len(train_losses) > 10:
@@ -913,28 +888,15 @@ class CNN3DTrainer:
                 print(f"      Train loss improvement: {train_improvement:.4f} ({early_train_avg:.4f} → {late_train_avg:.4f})")
                 print(f"      Test loss improvement: {test_improvement:.4f} ({early_test_avg:.4f} → {late_test_avg:.4f})")
 
-                if train_improvement > 0.5 and test_improvement < 0.1:
-                    print("      ⚠️  Strong overfitting detected: train improved significantly but test didn't")
-                elif train_improvement < 0.1 and test_improvement < 0.1:
+                if train_improvement < 0.1 and test_improvement < 0.1:
                     print("      ⚠️  Learning stagnation: both train and test stopped improving")
                 elif test_improvement > train_improvement * 0.5:
                     print("      ✓ Good learning: test improvement follows train improvement")
 
-            print("    💡 Optimization Recommendations:")
-            if final_overfitting_ratio > 2.0:
-                print("      🔧 Overfitting mitigation:")
-                print(f"        • Increase dropout rate (current: {dropout_rate:.2f} → {min(0.5, dropout_rate + 0.1):.2f})")
-                print(f"        • Increase weight decay (current: {weight_decay:.0e} → {weight_decay * 10:.0e})")
-                print("        • Consider reducing model complexity")
-                print("        • Add more data augmentation")
-            elif final_overfitting_ratio < 1.2:
-                print("      🚀 Underfitting mitigation:")
-                print(f"        • Reduce dropout rate (current: {dropout_rate:.2f} → {max(0.1, dropout_rate - 0.1):.2f})")
-                print("        • Increase model capacity (add more channels/layers)")
-                print("        • Train for more epochs")
-                print("        • Increase learning rate")
-            else:
-                print("      ✓ Good balance between overfitting and underfitting")
+            print("    💡 Optimization Notes:")
+            print(f"      • Current dropout rate: {dropout_rate:.2f}")
+            print(f"      • Current weight decay: {weight_decay:.0e}")
+            print("      • If performance is unsatisfactory, consider tuning model capacity, epochs, or learning rate")
 
         if best_model_state is not None:
             model.load_state_dict(best_model_state)
@@ -1044,10 +1006,7 @@ class CNN3DTrainer:
             'train_losses': train_losses,
             'test_losses': test_losses,
             'learning_rates': learning_rates,
-            'overfitting_ratios': overfitting_ratios,
             'final_analysis': {
-                'final_overfitting_ratio': final_overfitting_ratio,
-                'max_overfitting_ratio': max_overfitting_ratio,
                 'samples_per_param': samples_per_param,
                 'total_epochs': epoch + 1
             }
@@ -1228,34 +1187,11 @@ class CNN3DTrainer:
         test_r2s = [self.model_storage[i]['test_r2'] for i in range(self.n_folds)]
         test_maes = [self.model_storage[i]['test_mae'] for i in range(self.n_folds)]
         
-        # Calculate overfitting metrics for all folds
-        overfitting_ratios = []
-        for i in range(self.n_folds):
-            if 'monitoring_data' in self.model_storage[i] and self.model_storage[i]['monitoring_data']:
-                monitor_data = self.model_storage[i]['monitoring_data']
-                if 'final_analysis' in monitor_data:
-                    overfitting_ratios.append(monitor_data['final_analysis']['final_overfitting_ratio'])
-                elif 'overfitting_ratios' in monitor_data and monitor_data['overfitting_ratios']:
-                    overfitting_ratios.append(monitor_data['overfitting_ratios'][-1])
-                else:
-                    overfitting_ratios.append(test_rmses[i]**2 / train_rmses[i]**2)  # Approximate ratio
-            else:
-                overfitting_ratios.append(test_rmses[i]**2 / train_rmses[i]**2)  # Approximate ratio
-        
         print("📊 Per-fold Performance Analysis:")
         print("-" * 80)
         for i in range(self.n_folds):
-            overfitting_status = ""
-            if overfitting_ratios[i] > 2.0:
-                overfitting_status = " ⚠️ OVERFIT"
-            elif overfitting_ratios[i] > 1.5:
-                overfitting_status = " ⚡MILD_OVERFIT"
-            elif overfitting_ratios[i] < 1.1:
-                overfitting_status = " ✓GOOD_FIT"
-            
             print(f"  Fold {i+1}: Train RMSE={train_rmses[i]:.4f}, R²={train_r2s[i]:.4f} | "
-                  f"Test RMSE={test_rmses[i]:.4f}, R²={test_r2s[i]:.4f} | "
-                  f"Ratio={overfitting_ratios[i]:.2f}{overfitting_status}")
+                  f"Test RMSE={test_rmses[i]:.4f}, R²={test_r2s[i]:.4f}")
             
             # Add training details for each fold if available
             if 'monitoring_data' in self.model_storage[i] and self.model_storage[i]['monitoring_data']:
@@ -1281,12 +1217,9 @@ class CNN3DTrainer:
         print("-" * 40)
         test_rmse_cv = np.std(test_rmses) / np.mean(test_rmses) if np.mean(test_rmses) > 0 else 0
         test_r2_cv = np.std(test_r2s) / np.mean(test_r2s) if np.mean(test_r2s) > 0 else 0
-        overfitting_cv = np.std(overfitting_ratios) / np.mean(overfitting_ratios) if np.mean(overfitting_ratios) > 0 else 0
         
         print(f"  Test RMSE consistency (CV): {test_rmse_cv:.3f} {'✓ Consistent' if test_rmse_cv < 0.1 else '⚠️ Variable' if test_rmse_cv < 0.2 else '❌ Highly Variable'}")
         print(f"  Test R² consistency (CV): {test_r2_cv:.3f} {'✓ Consistent' if test_r2_cv < 0.1 else '⚠️ Variable' if test_r2_cv < 0.2 else '❌ Highly Variable'}")
-        print(f"  Overfitting consistency (CV): {overfitting_cv:.3f} {'✓ Consistent' if overfitting_cv < 0.2 else '⚠️ Variable' if overfitting_cv < 0.4 else '❌ Highly Variable'}")
-        print(f"  Average overfitting ratio: {np.mean(overfitting_ratios):.2f} ± {np.std(overfitting_ratios):.2f}")
         
         # Find best and worst models
         self.best_model_idx = np.argmin(test_rmses)
@@ -1295,32 +1228,16 @@ class CNN3DTrainer:
         print(f"\n🏆 Best vs Worst Model Comparison:")
         print("-" * 45)
         print(f"  Best model (Fold {self.best_model_idx + 1}):")
-        print(f"    Test RMSE: {test_rmses[self.best_model_idx]:.4f}, R²: {test_r2s[self.best_model_idx]:.4f}, "
-              f"Overfitting: {overfitting_ratios[self.best_model_idx]:.2f}")
+        print(f"    Test RMSE: {test_rmses[self.best_model_idx]:.4f}, R²: {test_r2s[self.best_model_idx]:.4f}")
         print(f"  Worst model (Fold {worst_model_idx + 1}):")
-        print(f"    Test RMSE: {test_rmses[worst_model_idx]:.4f}, R²: {test_r2s[worst_model_idx]:.4f}, "
-              f"Overfitting: {overfitting_ratios[worst_model_idx]:.2f}")
+        print(f"    Test RMSE: {test_rmses[worst_model_idx]:.4f}, R²: {test_r2s[worst_model_idx]:.4f}")
         print(f"  Performance gap: RMSE {test_rmses[worst_model_idx] - test_rmses[self.best_model_idx]:.4f}, "
               f"R² {test_r2s[self.best_model_idx] - test_r2s[worst_model_idx]:.4f}")
         
         # Overall model recommendations
         print(f"\n💡 Overall Model Optimization Recommendations:")
         print("-" * 55)
-        avg_overfitting = np.mean(overfitting_ratios)
-        if avg_overfitting > 2.5:
-            print(f"  🔧 Strong overfitting detected (avg ratio: {avg_overfitting:.2f}):")
-            print(f"     • Increase regularization (dropout, weight decay)")
-            print(f"     • Reduce model complexity")
-            print(f"     • Collect more training data")
-            print(f"     • Improve data augmentation")
-        elif avg_overfitting < 1.3:
-            print(f"  🚀 Potential underfitting (avg ratio: {avg_overfitting:.2f}):")
-            print(f"     • Increase model capacity")
-            print(f"     • Reduce regularization")
-            print(f"     • Train for more epochs")
-            print(f"     • Increase learning rate")
-        else:
-            print(f"  ✓ Good bias-variance tradeoff (avg ratio: {avg_overfitting:.2f})")
+        print(f"  • Review RMSE/R² across folds and tune capacity, regularization, or epochs if needed")
         
         if test_rmse_cv > 0.15:
             print(f"  ⚠️  High performance variability across folds:")
@@ -1363,9 +1280,7 @@ class CNN3DTrainer:
         
         attention_effectiveness_scores = []
         for i in range(self.n_folds):
-            # Use performance as a proxy for attention effectiveness
-            # Better performance might indicate more effective attention
-            fold_score = test_r2s[i] * (1 / max(overfitting_ratios[i], 0.1))  # Weighted by overfitting control
+            fold_score = test_r2s[i]
             attention_effectiveness_scores.append(fold_score)
         
         avg_attention_score = np.mean(attention_effectiveness_scores)
@@ -1373,7 +1288,7 @@ class CNN3DTrainer:
         
         if avg_attention_score > 0.8:
             print(f"  🎉 Attention mechanism appears highly effective!")
-            print(f"     • Good balance of performance and overfitting control")
+            print(f"     • Performance is consistently strong across folds")
         elif avg_attention_score > 0.5:
             print(f"  ✓ Attention mechanism working reasonably well")
         else:
