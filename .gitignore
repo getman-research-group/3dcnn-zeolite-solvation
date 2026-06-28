@@ -35,3 +35,4 @@ htmlcov/
 *.swp
 *.swo
 *~
+dataset_cnn/size_16.0-box_0.8-shape_20_20_20_28/FAU-methanol_240_water_960-hydrophilic-02_01_02_propanol-size_16.0-box_0.8-shape_20_20_20_28.pkl
