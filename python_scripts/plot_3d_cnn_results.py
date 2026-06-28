@@ -14,12 +14,6 @@ fold, plus metadata describing the dataset and training configuration. The
 plotting workflow uses the saved ``df_train`` and ``df_test`` tables from each
 fold rather than re-running inference.
 
-This script also includes backward-compatibility support for older result
-pickles created before the model module was renamed. Some historical pickles
-store model objects that reference the old module name
-``model_3d_cnn_2_8``. A compatibility alias is registered below so those files
-can still be opened after the repository cleanup.
-
 Main capabilities
 -----------------
 - load one saved CNN results pickle;
