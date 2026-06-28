@@ -69,15 +69,16 @@ Figures and interpretation analyses
   distributions. It generates the manuscript data-distribution figure together
   with additional diagnostic plots.
 - `plot_3d_cnn_results.py` extracts cross-validation predictions and metrics and
-  generates model-performance figures.
+  generates the model parity plot (Figure 6) and test-time-augmentation
+  comparison (Figure S5.4).
 - `plot_training_info.py` visualizes losses, learning behavior, and training
   diagnostics.
-- `plot_attention_results.py` analyzes and visualizes learned spatial-attention
-  maps.
-- `plot_importance_captum.py` performs Captum-based feature-attribution
-  analysis.
-- `plot_importance_maps.py` generates three-dimensional feature-importance maps
-  from trained models.
+- `plot_attention_results.py` extracts the spatial-attention weights learned by
+  the adsorbate, solvent, and interaction modules and generates the attention
+  heatmaps reported as Figure 7 in the manuscript.
+- `plot_importance_spatial.py` uses Captum Integrated Gradients and Layer
+  Conductance to generate the input- and processor-level spatial attribution
+  maps reported as Figures S5.5, S5.6, and S5.7 in the Supporting Information.
 
 Generated figures are written to subdirectories of `output_figures/`.
 
