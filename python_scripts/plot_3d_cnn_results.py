@@ -2049,209 +2049,6 @@ class CNN3DResultsExtractor:
                     print("-" * 85)
 
 
-    def plot_bar_plot_performance_using_test_augment(self,
-                         figsize: Tuple[int, int] = (24, 8),
-                         save_path: str = None,
-                         bar_width: float = 0.2,
-                         show_score_on_bar: bool = False,
-                         red_color: str = None,           # Use class attribute as default
-                         blue_color: str = None,          # Use class attribute as default
-                         show_plot: bool = False,
-                         save_plot: bool = False
-                         ):
-        """
-        Plot comprehensive performance comparison with improved visualization
-        
-        Args:
-            figsize: Figure size for the plot
-            save_path: Path to save the figure (optional)
-            show_score_on_bar: Whether to show numerical scores on bars (default: False)
-        """
-        # Use class attributes if no color parameters provided
-        if red_color is None:
-            red_color = self.red_color
-        if blue_color is None:
-            blue_color = self.blue_color
-            
-        if not self.model_storage:
-            print("No results to plot")
-            return
-        
-        # Use pre-calculated metrics
-        raw_metrics = {}
-        if self.summary_stats:
-            for metric in ['rmse', 'mae', 'r2']:
-                train_key = f'train_{metric}'
-                test_key = f'test_{metric}'
-                if train_key in self.summary_stats and test_key in self.summary_stats:
-                    raw_metrics[metric] = {
-                        'train_mean': self.summary_stats[train_key]['mean'],
-                        'train_std': self.summary_stats[train_key]['std'],
-                        'test_mean': self.summary_stats[test_key]['mean'],
-                        'test_std': self.summary_stats[test_key]['std']
-                    }
-        
-        # Use pre-calculated averaged metrics
-        voxel_avg_metrics = getattr(self, 'voxel_avg_stats', {})
-        snapshot_avg_metrics = getattr(self, 'snapshot_avg_stats', {})
-        
-        if self.verbose:
-            print(f"\n--- Performance Comparison (using pre-calculated metrics):")
-            print(f"    Raw metrics: {list(raw_metrics.keys())}")
-            print(f"    Voxel-averaged metrics: {list(voxel_avg_metrics.keys())}")
-            print(f"    Snapshot-averaged metrics: {list(snapshot_avg_metrics.keys())}")
-        
-        # Create comprehensive plot
-        fig, axes = plt.subplots(1, 3, figsize=figsize)
-        
-        metrics_info = [
-            ('rmse', 'RMSE (eV)', 'lower_better'),
-            ('mae', 'MAE (eV)', 'lower_better'), 
-            ('r2', 'R² Score', 'higher_better')
-        ]
-        
-        for idx, (metric, title, direction) in enumerate(metrics_info):
-            ax = axes[idx]
-            
-            # Collect available data types
-            aggregation_types = []
-            all_data = {}
-            
-            if metric in raw_metrics:
-                aggregation_types.append('Raw')
-                all_data['Raw'] = raw_metrics[metric]
-            
-            if metric in voxel_avg_metrics:
-                aggregation_types.append('Voxel Avg')
-                all_data['Voxel Avg'] = voxel_avg_metrics[metric]
-            
-            if metric in snapshot_avg_metrics:
-                aggregation_types.append('Snapshot Avg')
-                all_data['Snapshot Avg'] = snapshot_avg_metrics[metric]
-            
-            if not aggregation_types:
-                ax.text(0.5, 0.5, f'No {metric.upper()} data', ha='center', va='center', 
-                       transform=ax.transAxes, fontsize=self.font_size)
-                ax.set_title(title, fontsize=self.font_size)
-                continue
-            
-            # Set up bar positions
-            n_groups = len(aggregation_types)
-            bar_width = bar_width
-            group_width = bar_width * 2 + 0.1  # Space for train+test bars plus gap
-            x_positions = np.arange(n_groups) * group_width
-            
-            # Plot bars for each aggregation type
-            for i, agg_type in enumerate(aggregation_types):
-                data = all_data[agg_type]
-                
-                # Train bar (blue)
-                train_x = x_positions[i]
-                train_bar = ax.bar(train_x, data['train_mean'], bar_width, 
-                                  yerr=data['train_std'], capsize=5, 
-                                  alpha=0.8, color=blue_color)
-                
-                # Test bar (red)
-                test_x = x_positions[i] + bar_width
-                test_bar = ax.bar(test_x, data['test_mean'], bar_width,
-                                 yerr=data['test_std'], capsize=5,
-                                 alpha=0.8, color=red_color)
-                
-                # Add value labels on bars (only if show_score_on_bar is True)
-                if show_score_on_bar:
-                    def add_value_label(bar, mean, std, offset_factor=1.1):
-                        height = bar.get_height()
-                        y_pos = height + std * offset_factor if height >= 0 else height - std * offset_factor
-                        ax.text(bar.get_x() + bar.get_width()/2., y_pos,
-                               f'{mean:.3f}', ha='center', va='bottom' if height >= 0 else 'top',
-                               fontsize=self.font_size, fontweight='bold')
-                    
-                    add_value_label(train_bar[0], data['train_mean'], data['train_std'])
-                    add_value_label(test_bar[0], data['test_mean'], data['test_std'])
-            
-            # Customize axis
-            ax.set_ylabel(title, fontsize=self.font_size)
-            ax.grid(True, alpha=0.3, axis='y')
-            ax.tick_params(axis='both', which='major', labelsize=self.font_size)
-            
-            # Set x-axis labels and positions (center each group)
-            x_ticks = x_positions + bar_width / 2  # Center of each group
-            ax.set_xticks(x_ticks)
-            
-            # Use more descriptive chemical labels
-            descriptive_labels = []
-            for agg_type in aggregation_types:
-                if agg_type == 'Raw':
-                    descriptive_labels.append(r'$\mathit{\Delta E_{int,grid}}$')
-                elif agg_type == 'Voxel Avg':
-                    descriptive_labels.append(r'$\mathit{\Delta E_{int,snapshot}}$')
-                elif agg_type == 'Snapshot Avg':
-                    descriptive_labels.append(r'$\mathit{\Delta E_{sol,adsorbate}}$')
-                else:
-                    descriptive_labels.append(agg_type)
-            
-            ax.set_xticklabels(descriptive_labels, fontsize=self.font_size)
-            
-            # Add Train/Test legend in upper right corner of each subplot (horizontal layout)
-            from matplotlib.patches import Patch
-            legend_elements = [
-                Patch(facecolor=blue_color, alpha=0.8, label='Train'),
-                Patch(facecolor=red_color, alpha=0.8, label='Test')
-            ]
-            ax.legend(handles=legend_elements, fontsize=self.font_size,
-                     loc='upper right', framealpha=0.9, ncol=2)
-            
-            # Set y-axis limits and tick configuration manually for each metric
-            if metric == 'rmse':
-                ax.set_ylim(0, 0.15)  # RMSE typically ranges from 0 to ~0.2
-                ax.set_yticks(np.arange(0, 0.15, 0.03))  # Reduce upper bound to leave space
-                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))  # 3 decimal places
-            elif metric == 'mae':
-                ax.set_ylim(0, 0.15)  # MAE typically ranges from 0 to ~0.16
-                ax.set_yticks(np.arange(0, 0.15, 0.03))  # Reduce upper bound to leave space
-                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))  # 3 decimal places
-            elif metric == 'r2':
-                ax.set_ylim(0, 1.2)  # R² typically ranges from 0 to 1.0
-                ax.set_yticks(np.arange(0, 1.05, 0.2))  # Reduce upper bound to leave space
-                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.2f}'))  # 2 decimal places
-        
-        plt.tight_layout()
-        
-        if save_plot:
-            # Extract job code from pkl_name
-            parts = self.pkl_name.split('-')
-            job_code = '-'.join(parts[:3])
-            file_name = f"{job_code}-{self.split_type}-bar_plot_using_tta.png"
-            save_path = os.path.join(self.output_figure_path, 'cnn_results', file_name)
-            plt.savefig(save_path, dpi=1000, bbox_inches='tight')
-            if self.verbose:
-                print(f"    3D CNN performance comparison plot saved to: {save_path}")
-        
-        if show_plot:
-            plt.show()
-        
-        # Print summary table
-        if self.verbose:
-            print(f"\n--- Performance Summary Table:")
-            print(f"{'Metric':<12} {'Aggregation':<15} {'Train Mean':<12} {'Train Std':<12} {'Test Mean':<12} {'Test Std':<12}")
-            print("-" * 85)
-            
-            for metric in ['rmse', 'mae', 'r2']:
-                if metric in raw_metrics:
-                    data = raw_metrics[metric]
-                    print(f"{metric.upper():<12} {'Raw':<15} {data['train_mean']:<12.3f} {data['train_std']:<12.3f} {data['test_mean']:<12.3f} {data['test_std']:<12.3f}")
-                
-                if metric in voxel_avg_metrics:
-                    data = voxel_avg_metrics[metric]
-                    print(f"{'':12} {'Voxel Avg':<15} {data['train_mean']:<12.3f} {data['train_std']:<12.3f} {data['test_mean']:<12.3f} {data['test_std']:<12.3f}")
-                
-                if metric in snapshot_avg_metrics:
-                    data = snapshot_avg_metrics[metric]
-                    print(f"{'':12} {'Snapshot Avg':<15} {data['train_mean']:<12.3f} {data['train_std']:<12.3f} {data['test_mean']:<12.3f} {data['test_std']:<12.3f}")
-                
-                if metric != 'r2':
-                    print("-" * 85)
-
 
 if __name__ == "__main__":
 
@@ -2280,23 +2077,19 @@ if __name__ == "__main__":
     
     
     
-    # Generate no-TTA parity plot with three subplots including MD comparison - Vertical layout
-    extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
-        linear_fit=True,
-        confidence_band=True,
-        shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
-        show_plot=False,
-        save_plot=True,
-        ml_slope_x=0.15,
-        ml_slope_y=0.02,
-        md_slope_x=0.04,
-        md_slope_y=0.53
-    )
+    # # Generate no-TTA parity plot with three subplots including MD comparison - Vertical layout
+    # extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
+    #     linear_fit=True,
+    #     confidence_band=True,
+    #     shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
+    #     show_plot=False,
+    #     save_plot=True,
+    #     ml_slope_x=0.15,
+    #     ml_slope_y=0.02,
+    #     md_slope_x=0.04,
+    #     md_slope_y=0.53
+    # )
     
-    
-    # # Generate comprehensive performance bar plot (with TTA)
-    # extractor.plot_bar_plot_performance_using_test_augment(show_plot=False,
-    #                                                        save_plot=True)
     
     
     # # Generate comprehensive performance bar plot (no TTA)
