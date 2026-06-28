@@ -1875,32 +1875,32 @@ def plot_model_comparison(model_files, output_dir=None, font_size=18):
 if __name__ == "__main__":
     
     # Test with the specified model file
-    # model_filename = "model_2_8-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Good
-    # model_filename = "model_2_8-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Good
-    # model_filename = "model_2_8-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good  # 0.1166
-    # model_filename = "model_2_8-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good # 0.1140
-    # model_filename = "model_2_8-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    model_filename = "model_2_8-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good # 0.1150
-    # model_filename = "model_2_8-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good # 0.1181
-    # model_filename = "model_2_8-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-    # model_filename = "model_2_8-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Good
+    # model_filename = "model-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Good
+    # model_filename = "model-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good  # 0.1166
+    # model_filename = "model-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good # 0.1140
+    # model_filename = "model-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    model_filename = "model-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good # 0.1150
+    # model_filename = "model-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Very good # 0.1181
+    # model_filename = "model-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+    # model_filename = "model-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
 
     
     # Create plotter instance with specific model file (auto-loads data)
