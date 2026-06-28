@@ -420,6 +420,33 @@ class AttentionCNN(nn.Module):
         return x
 
 
-# Backward-compatible alias retained for scripts that still import the legacy name.
-AttentionCNN_2_8 = AttentionCNN
+if __name__ == "__main__":
+    print("=== AttentionCNN Model Check ===")
+
+    batch_size = 2
+    in_channels = 28
+    grid_size = 20
+
+    model = AttentionCNN(in_channels=in_channels)
+    model.eval()
+
+    dummy_input = torch.randn(batch_size, in_channels, grid_size, grid_size, grid_size)
+
+    with torch.no_grad():
+        output = model(dummy_input)
+
+    total_params = sum(param.numel() for param in model.parameters())
+    trainable_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
+
+    print(f"Input shape: {tuple(dummy_input.shape)}")
+    print(f"Output shape: {tuple(output.shape)}")
+    print(f"Output dtype: {output.dtype}")
+    print(f"Total parameters: {total_params:,}")
+    print(f"Trainable parameters: {trainable_params:,}")
+
+    assert output.shape == (batch_size, 1), (
+        f"Unexpected output shape: {tuple(output.shape)}"
+    )
+
+    print("Model forward pass completed successfully.")
     
