@@ -2,6 +2,8 @@ import os
 import pickle
 import torch
 from core.path import get_paths
+import model_3d_cnn
+
 
 def load_pkl_file(pkl_name: str):
     """
@@ -55,3 +57,4 @@ if __name__ == "__main__":
     
     print(f"Loading pickle file: {pkl_name}")
     data = load_pkl_file(pkl_name)
+    
