@@ -3110,9 +3110,9 @@ if __name__ == "__main__":
                                       point_size_deltaEint=50,)
     
     
-    # # Generate combined parity plot with three subplots (TTA method)
-    # extractor.plot_parity_plots_using_test_augment(show_plot=False,
-    #                                                save_plot=True)
+    # Generate combined parity plot with three subplots (TTA method)
+    extractor.plot_parity_plots_using_test_augment(show_plot=True,
+                                                   save_plot=True)
     
     
     
@@ -3121,32 +3121,32 @@ if __name__ == "__main__":
     #                                                                    save_plot=True)
     
     
-    # Generate no-TTA parity plot with three subplots including MD comparison (No-TTA + MD method)
-    extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures(
-        linear_fit=True,
-        confidence_band=True,
-        shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
-        show_plot=False,
-        save_plot=False,
-        ml_slope_x=0.15,
-        ml_slope_y=0.02,
-        md_slope_x=0.04,
-        md_slope_y=0.53
-    )
+    # # Generate no-TTA parity plot with three subplots including MD comparison (No-TTA + MD method)
+    # extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures(
+    #     linear_fit=True,
+    #     confidence_band=True,
+    #     shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
+    #     show_plot=False,
+    #     save_plot=False,
+    #     ml_slope_x=0.15,
+    #     ml_slope_y=0.02,
+    #     md_slope_x=0.04,
+    #     md_slope_y=0.53
+    # )
     
     
-    # Generate no-TTA parity plot with three subplots including MD comparison - Vertical layout
-    extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
-        linear_fit=True,
-        confidence_band=True,
-        shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
-        show_plot=False,
-        save_plot=True,
-        ml_slope_x=0.15,
-        ml_slope_y=0.02,
-        md_slope_x=0.04,
-        md_slope_y=0.53
-    )
+    # # Generate no-TTA parity plot with three subplots including MD comparison - Vertical layout
+    # extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
+    #     linear_fit=True,
+    #     confidence_band=True,
+    #     shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
+    #     show_plot=False,
+    #     save_plot=True,
+    #     ml_slope_x=0.15,
+    #     ml_slope_y=0.02,
+    #     md_slope_x=0.04,
+    #     md_slope_y=0.53
+    # )
     
     
     # # Generate comprehensive performance bar plot (with TTA)
