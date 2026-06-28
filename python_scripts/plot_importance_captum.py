@@ -2230,32 +2230,7 @@ class ImportanceMapAnalyzer:
 if __name__ == "__main__":
     
     # Model results file
-    # results_filename = "model-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.091
-    # results_filename = "model-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
-    # results_filename = "model-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
-    # results_filename = "model-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.085
-    # results_filename = "model-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    results_filename = "model-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
-    # results_filename = "model-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
-    # results_filename = "model-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # results_filename = "model-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
-    # results_filename = "model-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # results_filename = "model-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084 # Best
-    # results_filename = "model-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    results_filename = "model.pkl" # Test MAE 0.083 # Best
     
     # Initialize analyzer and run analysis
     analyzer = ImportanceMapAnalyzer(results_filename=results_filename,
@@ -2292,7 +2267,7 @@ if __name__ == "__main__":
     
     # # Generate 3D Captum saliency map from input voxel layer
     # print(f"\n--- Generating 3D Captum Saliency Map from Input Voxel Layer ---")
-    analyzer.plot_3d_saliency_map_input_voxel_layer(analysis_results, show_plots=False, save_plots=True)
+    analyzer.plot_3d_saliency_map_input_voxel_layer(analysis_results, show_plots=True, save_plots=False)
     
     # # # Generate 3D Captum saliency map from processor output layers
     # # print(f"\n--- Generating 3D Captum Saliency Map from Processor Output Layers ---")
