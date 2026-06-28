@@ -1163,9 +1163,7 @@ class CNN3DResultsExtractor:
         
         # Save with high quality settings
         if save_plot:
-            parts = self.pkl_name.split('-')
-            job_code = '-'.join(parts[:3])
-            file_name = f"{job_code}-tta_comparison_analysis.png"
+            file_name = "SI_figure_5_4-tta_comparison_analysis.png"
             save_path = os.path.join(self.output_figure_path, 'cnn_results', file_name)
             plt.savefig(save_path, dpi=500, bbox_inches='tight')
             
@@ -3101,8 +3099,8 @@ if __name__ == "__main__":
 
 
     # 5-fold CV: tests general molecular interactions
-    # pkl_name = "model-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    pkl_name = "model-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
+    pkl_name = "model-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
 
         
 
@@ -3124,7 +3122,7 @@ if __name__ == "__main__":
                                       point_size_deltaEint=50,)
     
     
-    # Generate combined parity plot with three subplots (TTA method)
+    # Generate SI Figure S5.4: TTA comparison analysis for the 3D CNN model
     extractor.plot_parity_plots_using_test_augment(show_plot=False,
                                                    save_plot=True)
     
