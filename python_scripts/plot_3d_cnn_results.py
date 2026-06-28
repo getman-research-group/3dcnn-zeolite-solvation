@@ -136,8 +136,8 @@ class CNN3DResultsExtractor:
         if not pkl_name:
             return 'random'
         
-        # Expected format: "model_2_8-{split_type}-{job_id}-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
-        # Or old format: "model_2_8-{job_id}-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+        # Expected format: "model-{split_type}-{job_id}-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
+        # Or old format: "model-{job_id}-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl"
         pkl_parts = pkl_name.split('-')
         if len(pkl_parts) >= 2:
             potential_split_type = pkl_parts[1]
@@ -3087,62 +3087,62 @@ if __name__ == "__main__":
 
 
     # Random split (5-fold CV): tests general molecular interactions
-    # pkl_name = "model_2_8-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.091
-    # pkl_name = "model_2_8-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
-    # pkl_name = "model_2_8-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
-    # pkl_name = "model_2_8-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.085
-    # pkl_name = "model_2_8-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    pkl_name = "model_2_8-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
-    # pkl_name = "model_2_8-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
-    # pkl_name = "model_2_8-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
-    # pkl_name = "model_2_8-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084
-    # pkl_name = "model_2_8-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    # pkl_name = "model-random-2546193-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546194-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.091
+    # pkl_name = "model-random-2546195-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
+    # pkl_name = "model-random-2546197-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-random-2546199-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-random-2546201-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546213-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546214-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    # pkl_name = "model-random-2546215-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546216-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546217-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.085
+    # pkl_name = "model-random-2546218-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-random-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546223-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546226-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546227-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546228-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    pkl_name = "model-random-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
+    # pkl_name = "model-random-2546238-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
+    # pkl_name = "model-random-2546239-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-random-2546240-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-random-2546241-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-random-2546243-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.086
+    # pkl_name = "model-random-2546244-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-random-2546246-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084
+    # pkl_name = "model-random-2546247-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
         
     
     # # Pore type split (2-fold CV): tests cross-pore-type prediction ability
-    # pkl_name = "model_2_8-pore_type-2518682-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.108
-    # pkl_name = "model_2_8-pore_type-2518683-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.115
-    # pkl_name = "model_2_8-pore_type-2518689-epochs_100-bs_32-lr_0.0005-grid_16.0_0.8.pkl" # Test MAE 0.112
-    # pkl_name = "model_2_8-pore_type-2518692-epochs_100-bs_32-lr_0.0005-grid_16.0_0.8.pkl" # Test MAE 0.113
-    # pkl_name = "model_2_8-pore_type-2518695-epochs_100-bs_32-lr_0.0005-grid_16.0_0.8.pkl" # Test MAE 0.106 # Best
-    # pkl_name = "model_2_8-pore_type-2518732-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.112
-    # pkl_name = "model_2_8-pore_type-2518733-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.115
-    # pkl_name = "model_2_8-pore_type-2518734-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.116
-    # pkl_name = "model_2_8-pore_type-2529419-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.118
-    # pkl_name = "model_2_8-pore_type-2532278-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.116
-    # pkl_name = "model_2_8-pore_type-2532283-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.116
+    # pkl_name = "model-pore_type-2518682-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.108
+    # pkl_name = "model-pore_type-2518683-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.115
+    # pkl_name = "model-pore_type-2518689-epochs_100-bs_32-lr_0.0005-grid_16.0_0.8.pkl" # Test MAE 0.112
+    # pkl_name = "model-pore_type-2518692-epochs_100-bs_32-lr_0.0005-grid_16.0_0.8.pkl" # Test MAE 0.113
+    # pkl_name = "model-pore_type-2518695-epochs_100-bs_32-lr_0.0005-grid_16.0_0.8.pkl" # Test MAE 0.106 # Best
+    # pkl_name = "model-pore_type-2518732-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.112
+    # pkl_name = "model-pore_type-2518733-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.115
+    # pkl_name = "model-pore_type-2518734-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.116
+    # pkl_name = "model-pore_type-2529419-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.118
+    # pkl_name = "model-pore_type-2532278-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.116
+    # pkl_name = "model-pore_type-2532283-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.116
     
     
     # # Solvent split (4-fold CV): tests cross-solvent prediction ability
-    # pkl_name = "model_2_8-solvent-2518713-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.090
-    # pkl_name = "model_2_8-solvent-2518714-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084
-    # pkl_name = "model_2_8-solvent-2518741-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
-    # pkl_name = "model_2_8-solvent-2518743-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
-    # pkl_name = "model_2_8-solvent-2518745-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-solvent-2529404-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.085
-    # pkl_name = "model_2_8-solvent-2529405-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
-    # pkl_name = "model_2_8-solvent-2529406-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
-    # pkl_name = "model_2_8-solvent-2529412-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model_2_8-solvent-2529413-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
-    # pkl_name = "model_2_8-solvent-2529414-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-solvent-2529436-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
-    # pkl_name = "model_2_8-solvent-2529439-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-solvent-2518713-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.090
+    # pkl_name = "model-solvent-2518714-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.084
+    # pkl_name = "model-solvent-2518741-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    # pkl_name = "model-solvent-2518743-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.089
+    # pkl_name = "model-solvent-2518745-epochs_100-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-solvent-2529404-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.085
+    # pkl_name = "model-solvent-2529405-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
+    # pkl_name = "model-solvent-2529406-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
+    # pkl_name = "model-solvent-2529412-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.088
+    # pkl_name = "model-solvent-2529413-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.090
+    # pkl_name = "model-solvent-2529414-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-solvent-2529436-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
+    # pkl_name = "model-solvent-2529439-epochs_200-bs_32-lr_0.0001-grid_16.0_0.8.pkl" # Test MAE 0.087
 
     
     # Set to True to export results to CSV
