@@ -2752,7 +2752,7 @@ def parse_arguments():
                        help='Number of training epochs')
     parser.add_argument('--batch-size', type=int, default=32,
                        help='Training batch size')
-    parser.add_argument('--learning-rate', type=float, default=0.001,
+    parser.add_argument('--learning-rate', type=float, default=0.0002,
                        help='Learning rate for optimizer')
     parser.add_argument('--split-type', type=str, default='random_split', 
                        choices=['random_split', 'solvent_split', 'pore_type_split'],
