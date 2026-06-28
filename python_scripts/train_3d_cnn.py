@@ -632,9 +632,11 @@ class CNN3DTrainer:
             if feature_names is None and self.verbose:
                 print("    ⚠️  Warning: Feature names not available, using None for model reconstruction")
             
+            # Reconstruct the model only to load saved weights for evaluation/result access.
+            # No explicit dropout value is needed here because the model is only used
+            # for loading saved weights and evaluation/result access in eval mode.
             model = AttentionCNN(
                 in_channels=28,
-                dropout_rate=0.10,
                 feature_names=feature_names
             )
             if self.verbose:
@@ -1244,35 +1246,6 @@ class CNN3DTrainer:
             print(f"     • Consider stratified sampling")
             print(f"     • Check for data leakage")
             print(f"     • Increase training stability (lower learning rate)")
-        
-        # Training patterns analysis across folds
-        print(f"\n📚 Cross-Fold Training Patterns:")
-        print("-" * 45)
-        
-        # Analyze convergence patterns if available
-        early_stopped_folds = 0
-        avg_epochs_completed = []
-        
-        for i in range(self.n_folds):
-            if 'monitoring_data' in self.model_storage[i] and self.model_storage[i]['monitoring_data']:
-                monitor_data = self.model_storage[i]['monitoring_data']
-                if 'final_analysis' in monitor_data:
-                    final_analysis = monitor_data['final_analysis']
-                    epochs = final_analysis.get('total_epochs', self.epochs)
-                    avg_epochs_completed.append(epochs)
-                    if epochs < self.epochs:
-                        early_stopped_folds += 1
-        
-        if avg_epochs_completed:
-            print(f"  Average epochs completed: {np.mean(avg_epochs_completed):.1f} / {self.epochs}")
-            print(f"  Early stopping rate: {early_stopped_folds}/{self.n_folds} folds ({early_stopped_folds/self.n_folds*100:.1f}%)")
-            
-            if early_stopped_folds > self.n_folds * 0.8:
-                print(f"  ⚠️  Most folds stopped early - consider more patience or different stopping criteria")
-            elif early_stopped_folds == 0:
-                print(f"  ⚠️  No early stopping occurred - might need more epochs or different criteria")
-            else:
-                print(f"  ✓ Reasonable early stopping pattern")
         
         avg_test_rmse = np.mean(test_rmses)
         print(f"\n📋 Performance Context:")
