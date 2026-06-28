@@ -108,7 +108,5 @@ This project is distributed under the MIT License. See `LICENSE` for details.
 
 ## Contact
 
-Rachel B. Getman  
-William G. Lowrie Department of Chemical and Biomolecular Engineering  
-The Ohio State University  
-getman.11@osu.edu
+For questions or requests for additional files, please contact:
+shi.1909@osu.edu
