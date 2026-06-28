@@ -1609,9 +1609,7 @@ class CNN3DResultsExtractor:
         
         # Save with high quality settings
         if save_plot:
-            parts = self.pkl_name.split('-')
-            job_code = '-'.join(parts[:3])
-            file_name = f"{job_code}-parity_plot_no_tta_with_md_vertical.png"
+            file_name = "figure_6_parity_plot.png"
             save_path = os.path.join(self.output_figure_path, 'cnn_results', file_name)
             
             plt.savefig(save_path, dpi=1000, bbox_inches='tight')
