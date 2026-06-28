@@ -572,8 +572,7 @@ class SpatialAttentionAnalyzer:
         
         # Save figure if requested
         if save_fig:
-            model_info = self.results_filename.replace('.pkl', '').split('-epochs_')[0]
-            filename = f"attention_heatmap_{view_angle.lower()}-{model_info}-{zeolite}-{env}-{pore_type}-{adsorbate}-snap{snapshot}-vox{voxel_id}.png"
+            filename = "figure_7-attention_heatmaps.png"
             save_path = os.path.join(self.output_dir, filename)
             plt.savefig(save_path, dpi=1000, bbox_inches='tight', facecolor='white')
             print(f"\n✅ Saved heatmap-only {view_angle} plane attention plot: {save_path}")
@@ -587,8 +586,7 @@ class SpatialAttentionAnalyzer:
 if __name__ == "__main__":
     
     # Model results file
-    results_filename = "model-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088 # Best
-    # results_filename = "model-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Good
+    results_filename = "model.pkl"
     
     
     ## Define the simulation parameters
