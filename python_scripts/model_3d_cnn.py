@@ -1,29 +1,6 @@
 """
 model_3d_cnn_2_8.py
-This file contains the definitions for the 3D-CNN model with CBAM attention mechanism 
-for adsorbate-solvent interaction-energy prediction using separated channels.
 
-Format specifications:
-- 28 input features (14 atomic features × 2 groups: adsorbate + solvent)
-- Separated channel groups for better feature interpretation
-- Default input shape: (batch_size, 28, 20, 20, 20)
-
-The dual-branch CNN architecture with CBAM optimization (Plan A):
-- Adsorbate branch: handles sparse central features with smaller kernels
-- Solvent branch: processes dense distributed features with larger kernels
-- Primary CBAM: interaction_attention at 72-channel fusion (optimal timing)
-- Secondary CBAM: layer1, layer2 only (layer3 removed for efficiency)
-- CNN backbone with selective attention for local feature extraction
-
-Key optimizations in v2_8 (Plan A):
-- ✅ OPTIMAL: Primary CBAM moved to interaction fusion point (72→72 channels)
-- ✅ Group-aware attention with correct group_split=[24, 48] before mixing
-- ✅ Efficiency: Removed layer3 CBAM (3→2 total CBAM modules)
-- Simplified CNN backbone: removed layer4 for better stability
-- Simplified ResidualBlock3D: single-path instead of dual-path design
-- Dual-branch processing optimized for adsorbate-solvent separation
-- Enhanced stability: reduced dropout and conservative initialization
-- Final CNN output: 80 channels (was 96)
 
 """
 
