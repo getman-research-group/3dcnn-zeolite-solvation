@@ -58,7 +58,7 @@ python python_scripts/generate_voxel_grids.py
 Train the 3D-CNN model:
 
 ```bash
-python python_scripts/train_3d_cnn_2_8.py
+python python_scripts/train_3d_cnn.py
 ```
 
 Generate parity plots and related analysis figures:
