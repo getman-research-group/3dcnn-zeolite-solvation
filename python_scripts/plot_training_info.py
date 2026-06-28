@@ -122,36 +122,20 @@ class EnhancedTrainingPlotter:
             if self.verbose:
                 print(f"📂 Loading model file: {file_path}")
             
-            # Robust pickle loading - handling complex CUDA issues
-            data = None
-            
-            # Method 1: Direct CPU mapping
-            try:
+            # Result summaries are standard pickle files, whereas fold
+            # checkpoints are written with torch.save(). Use the matching
+            # loader and map any tensors embedded in a pickle to the CPU.
+            if file_path.lower().endswith('.pkl'):
+                class CPUUnpickler(pickle.Unpickler):
+                    def find_class(self, module, name):
+                        if module == 'torch.storage' and name == '_load_from_bytes':
+                            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+                        return super().find_class(module, name)
+
+                with open(file_path, 'rb') as f:
+                    data = CPUUnpickler(f).load()
+            else:
                 data = torch.load(file_path, map_location='cpu', weights_only=False)
-            except RuntimeError as e:
-                if "CUDA" in str(e):
-                    if self.verbose:
-                        print("    Method 1 failed, using custom unpickler...")
-                    
-                    # Method 2: Custom unpickler to handle deep CUDA issues
-                    import pickle
-                    import io
-                    
-                    class CPUUnpickler(pickle.Unpickler):
-                        def find_class(self, module, name):
-                            if module == 'torch.storage' and name == '_load_from_bytes':
-                                return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
-                            return super().find_class(module, name)
-                    
-                    try:
-                        with open(file_path, 'rb') as f:
-                            data = CPUUnpickler(f).load()
-                    except Exception as e2:
-                        if self.verbose:
-                            print(f"    Custom unpickler also failed: {str(e2)[:100]}")
-                        raise RuntimeError(f"Cannot load file {file_path}: all methods failed")
-                else:
-                    raise
             
             if data is None:
                 raise RuntimeError("All loading methods failed")
@@ -182,7 +166,6 @@ class EnhancedTrainingPlotter:
                             'train_losses': monitoring.get('train_losses', []),
                             'test_losses': monitoring.get('test_losses', []),
                             'learning_rates': monitoring.get('learning_rates', []),
-                            'overfitting_ratios': monitoring.get('overfitting_ratios', []),
                             'gradient_norms': monitoring.get('gradient_norms', [])
                         })
                     else:
@@ -190,7 +173,6 @@ class EnhancedTrainingPlotter:
                             'train_losses': [],
                             'test_losses': [],
                             'learning_rates': [],
-                            'overfitting_ratios': [],
                             'gradient_norms': []
                         })
                     
@@ -504,26 +486,17 @@ class EnhancedTrainingPlotter:
         ax2.axhline(y=df['train_r2'].mean(), color='green', linestyle='--', alpha=0.7)
         ax2.axhline(y=df['test_r2'].mean(), color='darkorange', linestyle='--', alpha=0.7)
         
-        # Overfitting analysis
+        # MAE comparison
         ax3 = axes[1, 0]
-        overfitting_ratios = [test_rmse**2 / train_rmse**2 for train_rmse, test_rmse in zip(df['train_rmse'], df['test_rmse'])]
-        colors = ['red' if ratio > 2.0 else 'orange' if ratio > 1.5 else 'green' for ratio in overfitting_ratios]
-        
-        bars = ax3.bar(df['fold'], overfitting_ratios, color=colors, alpha=0.7)
-        ax3.set_title('Overfitting Analysis (Test²/Train² RMSE Ratio)', fontsize=self.font_size, fontweight='bold')
+        ax3.bar(x - width/2, df['train_mae'], width, label='Train MAE', alpha=0.8, color='plum')
+        ax3.bar(x + width/2, df['test_mae'], width, label='Test MAE', alpha=0.8, color='gold')
+        ax3.set_title('MAE Comparison', fontsize=self.font_size, fontweight='bold')
         ax3.set_xlabel('Fold', fontsize=self.font_size)
-        ax3.set_ylabel('Overfitting Ratio', fontsize=self.font_size)
-        ax3.axhline(y=1.5, color='orange', linestyle='--', alpha=0.7, label='Mild Overfitting (1.5)')
-        ax3.axhline(y=2.0, color='red', linestyle='--', alpha=0.7, label='Strong Overfitting (2.0)')
+        ax3.set_ylabel('MAE', fontsize=self.font_size)
+        ax3.set_xticks(x)
+        ax3.set_xticklabels(df['fold'], fontsize=self.font_size)
         ax3.legend(fontsize=self.font_size)
         ax3.grid(True, alpha=0.3)
-        plt.setp(ax3.get_xticklabels(), rotation=45, fontsize=self.font_size)
-        
-        # Add ratio values on bars
-        for bar, ratio in zip(bars, overfitting_ratios):
-            height = bar.get_height()
-            ax3.text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                    f'{ratio:.2f}', ha='center', va='bottom', fontsize=self.font_size)
         
         # Summary statistics
         ax4 = axes[1, 1]
@@ -538,10 +511,12 @@ Test RMSE:  {df['test_rmse'].mean():.4f} ± {df['test_rmse'].std():.4f}
 Train R²:   {df['train_r2'].mean():.4f} ± {df['train_r2'].std():.4f}
 Test R²:    {df['test_r2'].mean():.4f} ± {df['test_r2'].std():.4f}
 
+Train MAE:  {df['train_mae'].mean():.4f} ± {df['train_mae'].std():.4f}
+Test MAE:   {df['test_mae'].mean():.4f} ± {df['test_mae'].std():.4f}
+
 Best Fold:  {df.loc[df['test_rmse'].idxmin(), 'fold']} (Test RMSE: {df['test_rmse'].min():.4f})
 Worst Fold: {df.loc[df['test_rmse'].idxmax(), 'fold']} (Test RMSE: {df['test_rmse'].max():.4f})
 
-Avg Overfitting Ratio: {np.mean(overfitting_ratios):.2f}
 Performance CV: {df['test_rmse'].std() / df['test_rmse'].mean() * 100:.1f}%
 """
         
@@ -564,7 +539,7 @@ Performance CV: {df['test_rmse'].std() / df['test_rmse'].mean() * 100:.1f}%
             pass
     
     def plot_training_dynamics(self):
-        """Plot training dynamics (overfitting, learning rates, gradients)"""
+        """Plot learning-rate, gradient-norm, and loss-improvement dynamics."""
         if not self.training_data['folds']:
             print("❌ No training dynamics data available")
             return
@@ -572,8 +547,9 @@ Performance CV: {df['test_rmse'].std() / df['test_rmse'].mean() * 100:.1f}%
         # Check for available dynamics data
         folds_with_dynamics = []
         for fold_idx, fold_data in self.training_data['folds'].items():
-            if ('overfitting_ratios' in fold_data and len(fold_data.get('overfitting_ratios', [])) > 0) or \
-               ('learning_rates' in fold_data and len(fold_data.get('learning_rates', [])) > 0):
+            if (len(fold_data.get('learning_rates', [])) > 0 or
+                    len(fold_data.get('gradient_norms', [])) > 0 or
+                    len(fold_data.get('test_losses', [])) > 5):
                 folds_with_dynamics.append(fold_idx)
         
         if not folds_with_dynamics:
@@ -581,28 +557,11 @@ Performance CV: {df['test_rmse'].std() / df['test_rmse'].mean() * 100:.1f}%
             return
         
         # Create subplots
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        fig, axes = plt.subplots(1, 3, figsize=(21, 6))
         fig.suptitle('Training Dynamics Analysis', fontsize=self.font_size, fontweight='bold')
         
-        # Plot 1: Overfitting ratios over epochs
-        ax1 = axes[0, 0]
-        for fold_idx in folds_with_dynamics[:5]:  # Show up to 5 folds for complete analysis
-            fold_data = self.training_data['folds'][fold_idx]
-            if 'overfitting_ratios' in fold_data and len(fold_data['overfitting_ratios']) > 0:
-                epochs = range(1, len(fold_data['overfitting_ratios']) + 1)
-                ax1.plot(epochs, fold_data['overfitting_ratios'], 
-                        label=f'Fold {fold_idx + 1}', linewidth=2, alpha=0.8)
-        
-        ax1.axhline(y=1.5, color='orange', linestyle='--', alpha=0.7, label='Mild Overfitting')
-        ax1.axhline(y=2.0, color='red', linestyle='--', alpha=0.7, label='Strong Overfitting')
-        ax1.set_title('Overfitting Ratio Over Training', fontsize=self.font_size, fontweight='bold')
-        ax1.set_xlabel('Epoch', fontsize=self.font_size)
-        ax1.set_ylabel('Test/Train Loss Ratio', fontsize=self.font_size)
-        ax1.legend(fontsize=self.font_size)
-        ax1.grid(True, alpha=0.3)
-        
-        # Plot 2: Learning rates over epochs
-        ax2 = axes[0, 1]
+        # Plot 1: Learning rates over epochs
+        ax2 = axes[0]
         for fold_idx in folds_with_dynamics[:5]:  # Show up to 5 folds for complete analysis
             fold_data = self.training_data['folds'][fold_idx]
             if 'learning_rates' in fold_data and len(fold_data['learning_rates']) > 0:
@@ -616,8 +575,8 @@ Performance CV: {df['test_rmse'].std() / df['test_rmse'].mean() * 100:.1f}%
         ax2.legend(fontsize=self.font_size)
         ax2.grid(True, alpha=0.3)
         
-        # Plot 3: Gradient norms over epochs
-        ax3 = axes[1, 0]
+        # Plot 2: Gradient norms over epochs
+        ax3 = axes[1]
         for fold_idx in folds_with_dynamics[:5]:  # Show up to 5 folds for complete analysis
             fold_data = self.training_data['folds'][fold_idx]
             if 'gradient_norms' in fold_data and len(fold_data['gradient_norms']) > 0:
@@ -631,8 +590,8 @@ Performance CV: {df['test_rmse'].std() / df['test_rmse'].mean() * 100:.1f}%
         ax3.legend(fontsize=self.font_size)
         ax3.grid(True, alpha=0.3)
         
-        # Plot 4: Learning curves comparison (loss improvement rate)
-        ax4 = axes[1, 1]
+        # Plot 3: Learning curves comparison (loss improvement rate)
+        ax4 = axes[2]
         for fold_idx in folds_with_dynamics[:5]:  # Show up to 5 folds for complete analysis
             fold_data = self.training_data['folds'][fold_idx]
             if 'test_losses' in fold_data and len(fold_data['test_losses']) > 5:
@@ -1310,8 +1269,8 @@ Model Stability: {'Excellent' if cv_rmse < 5 else 'Good' if cv_rmse < 10 else 'P
             available['Training Curves'] = True
         
         # Check training dynamics
-        if any(('overfitting_ratios' in fold_data and len(fold_data.get('overfitting_ratios', [])) > 0) or
-               ('gradient_norms' in fold_data and len(fold_data.get('gradient_norms', [])) > 0)
+        if any(len(fold_data.get('gradient_norms', [])) > 0 or
+               len(fold_data.get('learning_rates', [])) > 0
                for fold_data in self.training_data['folds'].values()):
             available['Training Dynamics'] = True
         
