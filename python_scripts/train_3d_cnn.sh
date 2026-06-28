@@ -23,9 +23,14 @@ TEST_MODE="false"
 MODEL_FILE="train_3d_cnn"    # Default model file to execute (updated version with split-type support)
 EPOCHS=100
 BATCH_SIZE=32
-LEARNING_RATE=0.001
+LEARNING_RATE=0.0002
 RANDOM_STATE=42
 SPLIT_TYPE="random_split"
+MODE_SET=""
+EPOCHS_SET=""
+BATCH_SIZE_SET=""
+LEARNING_RATE_SET=""
+RANDOM_STATE_SET=""
 
 # Parse arguments
 for arg in "$@"; do
@@ -82,11 +87,10 @@ for arg in "$@"; do
 done
 
 # Extract model name from model file for naming purposes
-# Convert train_3d_cnn -> model, etc.
-if [[ "$MODEL_FILE" =~ train_3d_cnn_(.+)$ ]]; then
-    MODEL_NAME="model_${BASH_REMATCH[1]}"
+# Map the default training script to a concise output prefix.
+if [ "$MODEL_FILE" = "train_3d_cnn" ]; then
+    MODEL_NAME="model"
 else
-    # Fallback: use the model file name directly if pattern doesn't match
     MODEL_NAME="$MODEL_FILE"
 fi
 
@@ -132,7 +136,7 @@ echo "================================================================="
 echo "Command used: sbatch train_3d_cnn.sh $@"
 echo "Parsed parameters:"
 echo "  - MODEL_FILE:       $MODEL_FILE"
-echo "  - MODEL_NAME:       $MODEL_NAME (for file naming)"
+echo "  - MODEL_NAME:       $MODEL_NAME"
 echo "  - MODE:             $MODE"
 echo "  - TEST_MODE:        $TEST_MODE"
 echo "  - EPOCHS:           $EPOCHS"
@@ -180,8 +184,6 @@ echo "  - Python Path: $(which python)"
 echo "  - Conda Env:   $CONDA_DEFAULT_ENV"
 echo "  - PyTorch:     $(python -c 'import torch; print(torch.__version__)')"
 echo "  - CUDA Ready:  $(python -c 'import torch; print(torch.cuda.is_available())')"
-echo "  - GPU Count:   $(python -c 'import torch; print(torch.cuda.device_count())')"
-echo "  - GPU Name:    $(python -c 'import torch; print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A")')"
 echo "-----------------------------------------------------------------"
 
 
@@ -242,7 +244,7 @@ case $MODE in
         echo "  full     - Full training mode (default)"
         echo "  retrain  - Force retrain existing models"
         echo "  quick    - Very quick test (same as test mode)"
-        echo "  debug    - Debug mode with 2 CV folds"
+        echo "  debug    - Debug mode (same lightweight path as test mode)"
         echo "  custom   - Custom training with specified parameters"
         echo ""
         echo "Model File Selection:"
@@ -250,7 +252,7 @@ case $MODE in
         echo ""
         echo "Usage examples:"
         echo "  Positional: sbatch train_3d_cnn.sh [MODE] [EPOCHS] [BATCH_SIZE] [LEARNING_RATE] [RANDOM_STATE]"
-        echo "  Example: sbatch train_3d_cnn.sh full 100 32 0.001 42"
+        echo "  Example: sbatch train_3d_cnn.sh full 100 32 0.0002 42"
         echo ""
         echo "  Named parameters: sbatch train_3d_cnn.sh [param=value] ..."
         echo "  Example: sbatch train_3d_cnn.sh model-file=train_3d_cnn epochs=100 batch-size=16 split-type=solvent_split"
@@ -285,20 +287,7 @@ echo "-----------------------------------------------------------------"
 #
 echo "Model training completed. All results are saved in the output directory."
 echo ""
-echo "Actual file locations on server:"
-echo "  - Output Directory: /fs/ess/PAS2536/jiexins/zeolite_project/output_model_cnn/"
-echo "  - PKL, PTH, and log files are all in the above directory."
-echo "  - Files will be prefixed with: ${MODEL_NAME}"
-
-
-# Monitor GPU usage during training
-echo ""
-echo "GPU Usage Summary:"
-if command -v nvidia-smi &> /dev/null; then
-    nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits
-else
-    echo "nvidia-smi not available"
-fi
+echo "Output prefix used for saved files: ${MODEL_NAME}"
 
 
 # 7. FINAL JOB STATUS
@@ -319,13 +308,13 @@ exit $PYTHON_EXIT_CODE
 # =================================================================================
 #
 # 1. Default CNN Model (train_3d_cnn) - Full Dataset Training:
-#    sbatch train_3d_cnn.sh model-file=train_3d_cnn epochs=100 batch-size=32 learning-rate=0.001
-#    Output files: model_JOBID.log, model_JOBID.err, model_JOBID_*.pth, model_JOBID_*.pkl
+#    sbatch train_3d_cnn.sh model-file=train_3d_cnn epochs=100 batch-size=32 learning-rate=0.0002
+#    Output files: model-random-JOBID.log, model-random-JOBID.err, model-random-JOBID-*.pth, model-random-JOBID-*.pkl
 #
 # 2. Quick Test Mode:
 #    sbatch train_3d_cnn.sh test
 #
-# 3. Debug Mode (2 CV folds only):
+# 3. Debug Mode (same lightweight path as test mode):
 #    sbatch train_3d_cnn.sh debug
 #
 # 4. Custom Parameters:
