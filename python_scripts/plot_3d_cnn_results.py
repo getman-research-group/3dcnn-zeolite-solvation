@@ -1,13 +1,33 @@
 # -*- coding: utf-8 -*-
 """
-extract_3d_cnn.py
-The purpose of this script is to extract and visualize results from trained 3D CNN models.
-Features:
-- Load and parse pkl files containing training results
-- Extract metrics from all cross-validation folds
-- Generate comprehensive visualization plots
-- Compare different model configurations
-- Export results to various formats
+plot_3d_cnn_results.py
+
+Load, summarize, and visualize cross-validation results from trained 3D CNN
+models. The script reads the project-level ``.pkl`` result files written by
+``train_3d_cnn.py``, extracts per-fold prediction tables and aggregate metrics,
+computes voxel-averaged and snapshot-averaged predictions, and generates
+publication-style parity plots and related summary figures.
+
+The expected input is a results pickle saved in ``output_model_cnn/``. Each
+pickle contains a top-level ``model_storage`` dictionary with one entry per
+fold, plus metadata describing the dataset and training configuration. The
+plotting workflow uses the saved ``df_train`` and ``df_test`` tables from each
+fold rather than re-running inference.
+
+This script also includes backward-compatibility support for older result
+pickles created before the model module was renamed. Some historical pickles
+store model objects that reference the old module name
+``model_3d_cnn_2_8``. A compatibility alias is registered below so those files
+can still be opened after the repository cleanup.
+
+Main capabilities
+-----------------
+- load one saved CNN results pickle;
+- summarize fold-wise RMSE / MAE / R² values;
+- compute voxel-averaged and snapshot-averaged predictions;
+- compare model predictions with MD-derived reference values when available;
+- export fold summaries to CSV;
+- generate parity plots for raw, voxel-averaged, and snapshot-averaged results.
 """
 
 import os
