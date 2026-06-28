@@ -100,9 +100,7 @@ The main workflow is:
 5. Save trained checkpoints to `output_model_cnn/` and generate figures in `output_figures/`.
 
 The repository includes clean energy tables, trained fold checkpoints, and
-representative LAMMPS and CP2K files. Large generated voxel datasets and full
-trajectory collections must be regenerated locally or distributed through an
-external data archive.
+representative LAMMPS and CP2K files.
 
 ## License
 
