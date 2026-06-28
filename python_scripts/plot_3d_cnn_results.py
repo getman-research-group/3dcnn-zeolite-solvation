@@ -46,7 +46,6 @@ class CNN3DResultsExtractor:
     """
     
     def __init__(self, pkl_name: str = None, verbose: bool = True, 
-                 export_csv: bool = False,
                  font_size: int = 24,
                  blue_color: str = '#488cca',
                  red_color: str = '#ff0000',
@@ -61,7 +60,6 @@ class CNN3DResultsExtractor:
         Args:
             pkl_name: Name of the pkl file to load (e.g., 'epochs_1-bs_8-lr_0.001-splits_5-grid_20.0_1.0-test.pkl')
             verbose: Whether to print detailed information
-            export_csv: Whether to export results to CSV
             font_size: Font size for all plot elements (default: 24)
             blue_color: Color for training data points (default: '#488cca')
             red_color: Color for test data points (default: '#ff0000')
@@ -74,7 +72,6 @@ class CNN3DResultsExtractor:
         self.verbose = verbose
         self.model_dir = get_paths("output_model_cnn")
         self.pkl_name = pkl_name
-        self.export_csv = export_csv
         
         # Plotting parameters
         self.font_size = font_size
@@ -123,10 +120,6 @@ class CNN3DResultsExtractor:
             else:
                 # Only show basic summary, don't plot automatically
                 self.print_summary()
-                
-                # Export to CSV if requested
-                if self.export_csv:
-                    self.export_results_to_csv()
     
     
     def list_available_pkl_files(self) -> List[str]:
@@ -572,50 +565,7 @@ class CNN3DResultsExtractor:
             print(indented_results)
     
     
-    def export_results_to_csv(self, output_path: str = None) -> str:
-        """
-        Export results to CSV file
-        
-        Args:
-            output_path: Path for the output CSV file
-            
-        Returns:
-            str: Path of the saved CSV file
-        """
-        if self.fold_results is None or self.fold_results.empty:
-            print("No results to export")
-            return None
-        
-        if output_path is None:
-            base_name = self.pkl_name.replace('.pkl', '_results.csv') if self.pkl_name else 'cnn_results.csv'
-            output_path = os.path.join(self.model_dir, base_name)
-        
-        # Add summary statistics as additional rows
-        export_df = self.fold_results.copy()
-        
-        # Add summary rows
-        if self.summary_stats:
-            summary_rows = []
-            for stat_type in ['mean', 'std', 'min', 'max', 'median']:
-                row = {'fold': f'{stat_type.upper()}'}
-                for metric in ['train_rmse', 'train_r2', 'train_mae', 'test_rmse', 'test_r2', 'test_mae']:
-                    if metric in self.summary_stats:
-                        row[metric] = self.summary_stats[metric][stat_type]
-                    else:
-                        row[metric] = np.nan
-                summary_rows.append(row)
-            
-            summary_df = pd.DataFrame(summary_rows)
-            export_df = pd.concat([export_df, summary_df], ignore_index=True)
-        
-        export_df.to_csv(output_path, index=False)
-        
-        if self.verbose:
-            print(f"Results exported to: {output_path}")
-        
-        return output_path
-    
-        
+
     def plot_parity_plots_using_test_augment(self,
                                             figsize: Tuple[int, int] = (24, 16),
                                             show_plot: bool = False,
@@ -3104,14 +3054,9 @@ if __name__ == "__main__":
 
         
 
-    
-    # Set to True to export results to CSV
-    export_csv = False
-    
     # Create extractor with all parameters - execution happens automatically in __init__
     extractor = CNN3DResultsExtractor(pkl_name=pkl_name,
                                       verbose=True,
-                                      export_csv=export_csv,
                                       font_size=24,
                                       blue_color='#1f77b4',
                                       red_color='#d62728',
