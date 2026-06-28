@@ -77,6 +77,12 @@ Full cross-validation training requires the complete locally generated voxel
 dataset; the representative example is intended to verify preprocessing and
 data loading.
 
+Generate the model-performance figures:
+
+```bash
+python python_scripts/plot_3d_cnn_results.py
+```
+
 Sample- and model-specific settings for the analysis scripts are defined in
 their main blocks. Repository paths are resolved by `python_scripts/core/path.py`
 and can be overridden with the `ZEOLITE_SOLVATION_PATH` environment variable.
