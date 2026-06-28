@@ -454,7 +454,7 @@ class ImportanceMapAnalyzer:
         
         # Set up paths
         self.results_path = os.path.join(get_paths("output_model_cnn"), results_filename)
-        self.output_dir = os.path.join(get_paths("output_figure_path"), "cnn_saliency_maps_captum")
+        self.output_dir = os.path.join(get_paths("output_figure_path"), "importance_maps")
         os.makedirs(self.output_dir, exist_ok=True)
         print(f"--- Output directory: {self.output_dir}")
         
