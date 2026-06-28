@@ -1,7 +1,9 @@
-"""
-model_3d_cnn_2_8.py
+"""3D-CNN architecture for voxel-based interaction-energy prediction.
 
-
+This module defines the attention blocks, residual blocks, and final network
+used to predict adsorbate-solvent interaction energies from 28-channel voxel
+representations. The input is organized as 14 adsorbate channels followed by
+14 solvent channels.
 """
 
 import torch
@@ -11,36 +13,38 @@ import torch.nn.functional as F
 
 class CBAMChannelAttention(nn.Module):
     """
-    Enhanced CBAM Channel Attention Module with group interaction capability.
-    Supports adsorbate-solvent group interaction for molecular interaction modeling.
+    Channel-attention block for 3D feature maps.
+
+    The module supports the standard CBAM formulation and an optional
+    adsorbate/solvent group-aware mode that applies separate channel MLPs to
+    the two channel groups before combining them.
     """
     def __init__(self, in_channels, reduction_ratio=16, dropout=0.1, enable_group_interaction=False, group_split=None):
         super(CBAMChannelAttention, self).__init__()
         
-        # Group interaction settings
+        # Optional adsorbate/solvent group-aware attention.
         self.enable_group_interaction = enable_group_interaction
-        self.group_split = group_split  # e.g., [24, 48] for adsorbate+solvent channels
+        self.group_split = group_split
         
-        # Standard CBAM channel attention design
+        # Shared pooling operators used by CBAM channel attention.
         self.avg_pool = nn.AdaptiveAvgPool3d(1)
         self.max_pool = nn.AdaptiveMaxPool3d(1)
         
-        # Shared MLP with dropout for regularization
+        # Shared MLP used in the standard channel-attention path.
         reduced_channels = max(in_channels // reduction_ratio, 1)
         self.shared_mlp = nn.Sequential(
             nn.Linear(in_channels, reduced_channels, bias=False),
             nn.ReLU(inplace=True),
-            nn.Dropout(dropout),  # Add dropout for regularization
+            nn.Dropout(dropout),
             nn.Linear(reduced_channels, in_channels, bias=False)
         )
         
-        # Group-specific MLPs for interaction modeling (if enabled)
+        # Group-specific MLPs used only in the group-aware attention path.
         if self.enable_group_interaction and self.group_split is not None:
             assert len(self.group_split) == 2, "Currently supports binary group split (adsorbate + solvent)"
             ads_channels, solv_channels = self.group_split
             assert ads_channels + solv_channels == in_channels, "Group split must sum to total channels"
             
-            # Separate MLPs for each group
             ads_reduced = max(ads_channels // reduction_ratio, 1)
             solv_reduced = max(solv_channels // reduction_ratio, 1)
             
@@ -58,10 +62,10 @@ class CBAMChannelAttention(nn.Module):
                 nn.Linear(solv_reduced, solv_channels, bias=False)
             )
             
-            # Cross-group interaction weight
-            self.interaction_strength = nn.Parameter(torch.tensor(0.5))  # Learnable interaction strength
+            # Learnable coupling between the two channel groups.
+            self.interaction_strength = nn.Parameter(torch.tensor(0.5))
         
-        # Enhanced initialization for better channel diversity
+        # Initialize linear layers conservatively for stable attention weights.
         for module in self.shared_mlp:
             if isinstance(module, nn.Linear):
                 nn.init.xavier_normal_(module.weight, gain=1.3)
@@ -77,53 +81,46 @@ class CBAMChannelAttention(nn.Module):
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
+        """Apply channel attention to a 5D tensor ``(N, C, D, H, W)``."""
         batch_size, channels, _, _, _ = x.size()
         
-        # Global average pooling and max pooling
+        # Pool the spatial dimensions into channel descriptors.
         avg_out = self.avg_pool(x).view(batch_size, channels)
         max_out = self.max_pool(x).view(batch_size, channels)
         
         if self.enable_group_interaction and self.group_split is not None:
-            # Group-aware processing with adsorbate-solvent interaction
             ads_channels, solv_channels = self.group_split
             
-            # Split features into adsorbate and solvent groups
-            avg_ads = avg_out[:, :ads_channels]  # Adsorbate channels
-            avg_solv = avg_out[:, ads_channels:] # Solvent channels
+            # Split pooled descriptors into adsorbate and solvent groups.
+            avg_ads = avg_out[:, :ads_channels]
+            avg_solv = avg_out[:, ads_channels:]
             max_ads = max_out[:, :ads_channels]
             max_solv = max_out[:, ads_channels:]
             
-            # Process each group separately
+            # Compute group-specific attention weights.
             ads_avg_weights = self.ads_mlp(avg_ads)
             ads_max_weights = self.ads_mlp(max_ads)
             solv_avg_weights = self.solv_mlp(avg_solv)
             solv_max_weights = self.solv_mlp(max_solv)
             
-            # Combine avg and max for each group
             ads_weights = self.activation(ads_avg_weights + ads_max_weights)
             solv_weights = self.activation(solv_avg_weights + solv_max_weights)
             
-            # 🎯 Cross-group interaction: Adsorbate "guides" solvent attention
-            # Model the physical intuition that adsorbate influences solvent arrangement
             interaction_factor = torch.sigmoid(self.interaction_strength)
             
-            # Method 1: Multiplicative interaction (adsorbate gates solvent)
-            ads_influence = ads_weights.mean(dim=1, keepdim=True)  # Global adsorbate signal
+            # Use the adsorbate signal to modulate solvent-channel weights.
+            ads_influence = ads_weights.mean(dim=1, keepdim=True)
             enhanced_solv_weights = solv_weights * (1 + interaction_factor * ads_influence)
             
-            # Method 2: Add residual connection to preserve individual group information
             final_ads_weights = ads_weights
             final_solv_weights = enhanced_solv_weights * interaction_factor + solv_weights * (1 - interaction_factor)
             
-            # Combine group attentions
             channel_weights = torch.cat([final_ads_weights, final_solv_weights], dim=1)
         else:
-            # Standard CBAM processing
             avg_weights = self.shared_mlp(avg_out)
             max_weights = self.shared_mlp(max_out)
             channel_weights = self.activation(avg_weights + max_weights)
         
-        # Reshape for broadcasting
         channel_weights = channel_weights.view(batch_size, channels, 1, 1, 1)
         
         return x * channel_weights.expand_as(x)
@@ -133,8 +130,10 @@ class CBAMChannelAttention(nn.Module):
 
 class CBAMSpatialAttention(nn.Module):
     """
-    Standard CBAM Spatial Attention Module with comprehensive monitoring.
-    Pure implementation following the original CBAM paper.
+    Spatial-attention block for 3D feature maps.
+
+    The implementation follows the standard CBAM design by combining
+    channel-wise mean and max projections and then predicting a spatial mask.
     """
     def __init__(self, kernel_size=7):
         super(CBAMSpatialAttention, self).__init__()
@@ -147,27 +146,26 @@ class CBAMSpatialAttention(nn.Module):
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
-        # Standard CBAM spatial attention
-        avg_out = torch.mean(x, dim=1, keepdim=True)  # Channel-wise average pooling
-        max_out, _ = torch.max(x, dim=1, keepdim=True)  # Channel-wise max pooling
+        """Apply spatial attention to a 5D tensor ``(N, C, D, H, W)``."""
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
         
-        # Concatenate along channel dimension
         spatial_input = torch.cat([avg_out, max_out], dim=1)
         
-        # Generate spatial attention weights
         spatial_weights = self.conv(spatial_input)
         spatial_weights = self.activation(spatial_weights)
         
-        # Apply attention
         return x * spatial_weights.expand_as(x)
     
 
 
 class CBAM3D(nn.Module):
     """
-    Enhanced Convolutional Block Attention Module (CBAM) for 3D molecular data.
-    Optimized for adsorbate-solvent interaction modeling with H-bond focus.
-    Kernel_size=5 optimized for 0.8Å resolution to capture H-bond distances (2-3Å).
+    Combined 3D CBAM block.
+
+    Channel attention is applied first, followed by spatial attention. The
+    block can optionally use group-aware channel attention when adsorbate and
+    solvent channels should be treated separately.
     """
     def __init__(self, in_channels, reduction_ratio=6, kernel_size=5, dropout=0.1, 
                  enable_group_interaction=False, group_split=None):
@@ -177,26 +175,24 @@ class CBAM3D(nn.Module):
             enable_group_interaction=enable_group_interaction, 
             group_split=group_split
         )
-        # Optimized spatial attention for molecular interactions (H-bond: ~3-4 voxels at 0.8Å)
         self.spatial_attention = CBAMSpatialAttention(kernel_size)
 
     def forward(self, x):
-        # Apply channel attention first (feature importance), then spatial attention (location importance)
+        """Apply channel attention followed by spatial attention."""
         x = self.channel_attention(x)
         x = self.spatial_attention(x)
         return x
 
 class ResidualBlock3D(nn.Module):
     """
-    Simplified 3D Residual Block with:
-    - Single-path design for reduced complexity
-    - Simplified CBAM attention for feature importance weighting  
-    - Improved gradient flow and BatchNorm stability
+    Residual 3D convolutional block used in the CNN backbone.
+
+    Each block contains two 3D convolutions, an optional CBAM block, and a
+    shortcut projection when the input and output channel counts differ.
     """
     def __init__(self, in_channels, out_channels, stride=1, use_cbam=True):
         super(ResidualBlock3D, self).__init__()
         
-        # 🔥 SIMPLIFIED: Single convolution path instead of dual-path
         self.conv1 = nn.Conv3d(in_channels, out_channels, kernel_size=3, 
                               stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm3d(out_channels)
@@ -205,10 +201,8 @@ class ResidualBlock3D(nn.Module):
                               stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm3d(out_channels)
         
-        # 🔥 SIMPLIFIED: CBAM with smaller kernel for stability
         self.cbam = CBAM3D(out_channels, kernel_size=3, dropout=0.08) if use_cbam else nn.Identity()
         
-        # Shortcut connection
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = nn.Sequential(
@@ -217,64 +211,49 @@ class ResidualBlock3D(nn.Module):
                 nn.BatchNorm3d(out_channels)
             )
         
-        # 🔥 STABILITY: ReLU activation and minimal dropout
-        self.dropout = nn.Dropout3d(p=0.01)  # Reduced dropout for simplified architecture
-        self.activation = nn.ReLU(inplace=True)  # ReLU for BatchNorm stability
+        self.dropout = nn.Dropout3d(p=0.01)
+        self.activation = nn.ReLU(inplace=True)
     
     def forward(self, x):
+        """Apply the residual block to a 5D tensor ``(N, C, D, H, W)``."""
         residual = x
         
-        # 🔥 SIMPLIFIED: Standard residual path
         out = self.activation(self.bn1(self.conv1(x)))
         out = self.dropout(out)
         out = self.bn2(self.conv2(out))
         
-        # Apply simplified CBAM attention
         out = self.cbam(out)
         
-        # Add shortcut and apply activation
         out += self.shortcut(residual)
         out = self.activation(out)
         
         return out
 
-class AttentionCNN_2_8(nn.Module):
+class AttentionCNN(nn.Module):
     """
-    3D CNN model for adsorbate-solvent interaction energy prediction.
-    Accepts 28 input channels (14 atomic features × 2 molecular groups).
-    
-    Architecture (Optimized with Plan A):
-    1. Dual-branch processing: separate adsorbate and solvent feature extraction
-    2. Group-aware CBAM attention at interaction fusion point (OPTIMAL placement)
-    3. CNN Backbone with selective CBAM attention (layer1, layer2 only)
-    4. Enhanced regressor for final prediction
-    
-    This dual-branch approach combines:
-    - Adsorbate branch: sparse central features processed with smaller kernels
-    - Solvent branch: dense distributed features processed with larger kernels
-    - Natural architectural emphasis on solvent features (2x capacity)
-    
-    CBAM Optimization (Plan A - Ultimate Simplified):
-    - Primary attention: interaction_attention at 72-channel fusion point (24+48 groups) - 🔑 CRITICAL
-    - Secondary attention: layer1 (32→48) at full 20×20×20 resolution - ✅ USEFUL  
-    - Removed attention: layer2 (52→56), layer3 (56→64) for maximum efficiency - ❌ TOO LATE
-    
-    Input representation:
-    - Default 28 input channels (14 atomic features × 2 groups: adsorbate + solvent)
-    - Supports dynamic channel numbers via in_channels parameter
-    - Enhanced feature analysis for separated channel groups
+    3D CNN for voxel-based interaction-energy prediction.
+
+    The network uses a dual-branch front end to process adsorbate and solvent
+    channels separately, merges the two streams with group-aware attention, and
+    then applies a residual CNN backbone followed by a regression head.
+
+    Expected input shape:
+        ``(batch_size, 28, 20, 20, 20)``
+
+    Channel layout:
+        - channels 0-13: adsorbate features
+        - channels 14-27: solvent features
     """
     def __init__(self, in_channels=28,  # 14 adsorbate + 14 solvent channels
-                 dropout_rate=0.35,     # Increased from 0.25 based on overfitting analysis
-                 feature_names=None):   # Add feature_names parameter
+                 dropout_rate=0.35,
+                 feature_names=None):
         
-        super(AttentionCNN_2_8, self).__init__()
+        super(AttentionCNN, self).__init__()
         
-        # Store configuration including input channels for dynamic feature analysis
+        # Store configuration used by downstream analysis utilities.
         self.in_channels = in_channels
-        self.dropout_rate = dropout_rate  # Store for analysis methods
+        self.dropout_rate = dropout_rate
         
-        # Store feature names for analysis methods
         self.feature_names = feature_names
         
         # The architecture expects matching 14-channel adsorbate and solvent groups.
@@ -282,134 +261,109 @@ class AttentionCNN_2_8(nn.Module):
             "The model requires 28 channels: 14 adsorbate + 14 solvent"
         )
         
-        # Adsorbate branch: Enhanced for better information preservation
-        # 🎯 ENHANCED: Increased capacity to reduce 75.2% information loss
-        # Adsorbate occupies central small volume, mostly zeros, so use enhanced processing with attention
+        # Adsorbate branch for sparse local features near the adsorption site.
         self.adsorbate_processor = nn.Sequential(
-            nn.Conv3d(14, 20, kernel_size=3, padding=1, bias=False),  # Increased from 16 to 20
+            nn.Conv3d(14, 20, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm3d(20),
-            nn.ReLU(inplace=True),  # ReLU for BatchNorm stability
+            nn.ReLU(inplace=True),
             
-            # 🔥 ADD ATTENTION: Lightweight CBAM for sparse feature focus
-            CBAM3D(20, reduction_ratio=8, kernel_size=3, dropout=0.05),  # Optimized for sparse features
+            CBAM3D(20, reduction_ratio=8, kernel_size=3, dropout=0.05),
             
-            # Enhanced feature densification pathway
-            nn.Conv3d(20, 26, kernel_size=1, bias=False),  # Smooth feature densification (20→26)
+            nn.Conv3d(20, 26, kernel_size=1, bias=False),
             nn.BatchNorm3d(26),
-            nn.ReLU(inplace=True),  # Keep ReLU for consistency
-            nn.Conv3d(26, 32, kernel_size=3, padding=1, bias=False),  # Final expansion (26→32)
+            nn.ReLU(inplace=True),
+            nn.Conv3d(26, 32, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm3d(32),
-            nn.ReLU(inplace=True),  # ReLU for final stability
-            nn.Dropout3d(0.06)  # Slightly reduced dropout due to increased capacity
+            nn.ReLU(inplace=True),
+            nn.Dropout3d(0.06)
         )
         
-        # Solvent branch: Mixed kernel strategy for optimal interaction capture
-        # 🎯 MIXED STRATEGY: 5x5x5 first layer for H-bond capture, 3x3x3 second layer for feature integration
-        # Solvent fills most space and is more important for interaction energy
+        # Solvent branch for denser distributed features across the voxel box.
         self.solvent_processor = nn.Sequential(
-            nn.Conv3d(14, 32, kernel_size=5, padding=2, bias=False),  # 5x5x5 kernels for H-bond capture (4.0Å receptive field)
+            nn.Conv3d(14, 32, kernel_size=5, padding=2, bias=False),
             nn.BatchNorm3d(32),
-            nn.ReLU(inplace=True),  # ReLU for BatchNorm stability
+            nn.ReLU(inplace=True),
             
-            # 🔥 ADD ATTENTION: Standard CBAM for dense feature optimization
-            CBAM3D(32, reduction_ratio=6, kernel_size=5, dropout=0.04),  # Match kernel size for attention
+            CBAM3D(32, reduction_ratio=6, kernel_size=5, dropout=0.04),
             
-            nn.Conv3d(32, 48, kernel_size=3, padding=1, bias=False),  # 3x3x3 kernels for feature integration
+            nn.Conv3d(32, 48, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm3d(48),
-            nn.ReLU(inplace=True),  # ReLU for BatchNorm stability
-            nn.Dropout3d(0.04)  # Slightly reduced dropout
+            nn.ReLU(inplace=True),
+            nn.Dropout3d(0.04)
         )
         
-        # 🎯 OPTIMAL: Group-Aware CBAM at the fusion point (Plan A)
-        # Apply attention BEFORE convolution mixing to preserve group information
+        # Group-aware attention at the adsorbate/solvent fusion point.
         self.interaction_attention = CBAM3D(
-            in_channels=80,           # Process complete 80 channels (32 adsorbate + 48 solvent)
-            kernel_size=5,            # Maintain larger kernel for H-bond capture (2-3Å at 0.8Å resolution)
+            in_channels=80,
+            kernel_size=5,
             dropout=0.08, 
             enable_group_interaction=True, 
-            group_split=[32, 48]      # 🔑 CRITICAL: Updated group split (32 adsorbate + 48 solvent)
+            group_split=[32, 48]
         )
         
-        # Interaction fusion layer: Smooth feature integration and dimensionality evolution
-        # � IMPROVED: Avoid aggressive compression to preserve interaction information
+        # Interaction fusion after attention-guided branch combination.
         self.interaction_conv = nn.Sequential(
-            nn.Conv3d(80, 64, kernel_size=3, padding=1, bias=False),  # 80 -> 64, gentle compression
+            nn.Conv3d(80, 64, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm3d(64),
-            nn.ReLU(inplace=True),  # ReLU for BatchNorm stability 
-            nn.Conv3d(64, 48, kernel_size=1, bias=False),  # 64 -> 48, further refinement
+            nn.ReLU(inplace=True),
+            nn.Conv3d(64, 48, kernel_size=1, bias=False),
             nn.BatchNorm3d(48),
-            nn.ReLU(inplace=True)  # ReLU for BatchNorm stability
+            nn.ReLU(inplace=True)
         )
         
-        # No manual branch weighting - let the architecture naturally express importance:
-        # - Solvent processor: 48 channels + 5x5x5→3x3x3 mixed kernels + attention
-        # - Adsorbate processor: 32 channels + 3x3x3 kernels + attention
-        # This design provides balanced capacity with dual attention mechanisms and optimal receptive field
+        # Residual CNN backbone.
+        self.layer1 = ResidualBlock3D(48, 52, stride=1, use_cbam=False)
+        self.pool1 = nn.AvgPool3d(2)
         
-        # 🏗️ ENHANCED CNN BACKBONE: Smooth progressive feature evolution
-        self.layer1 = ResidualBlock3D(48, 52, stride=1, use_cbam=False)  # 48 → 52
-        self.pool1 = nn.AvgPool3d(2)  # 20×20×20 → 10×10×10
+        self.layer2 = ResidualBlock3D(52, 58, stride=1, use_cbam=False)
+        self.pool2 = nn.AvgPool3d(2)
         
-        self.layer2 = ResidualBlock3D(52, 58, stride=1, use_cbam=False)  # 52 → 58
-        self.pool2 = nn.AvgPool3d(2)  # 10×10×10 → 5×5×5
+        self.layer3 = ResidualBlock3D(58, 64, stride=1, use_cbam=False)
         
-        # 🔥 SMOOTHER: Final smooth step to 64 channels (smoother growth: [4,6,6])
-        self.layer3 = ResidualBlock3D(58, 64, stride=1, use_cbam=False)  # 58 → 64
+        # Final spatial compression before the regression head.
+        self.adaptive_pool = nn.AdaptiveAvgPool3d(2)
         
-        # More aggressive spatial compression for MLP parameter reduction
-        self.adaptive_pool = nn.AdaptiveAvgPool3d(2)  # 5×5×5 → 2×2×2 (8 spatial locations)
-        
-        # 🎯 OPTIMIZED MLP: Match uniform CNN backbone output (64 channels)
-        regressor_input_dim = 64 * 2 * 2 * 2  # 512 (optimized from 640 to 512)
+        regressor_input_dim = 64 * 2 * 2 * 2
 
-        # Streamlined regressor: fewer parameters but richer input features  
+        # Regression head for the final scalar energy prediction.
         self.regressor = nn.Sequential(
             nn.Flatten(),
             
-            # 🔥 ENHANCED: Gradual information compression to reduce information loss
-            nn.Linear(regressor_input_dim, 128),  # 512 → 128 (4x reduction)
+            nn.Linear(regressor_input_dim, 128),
             nn.BatchNorm1d(128),
             nn.ReLU(inplace=True),
-            nn.Dropout(dropout_rate * 0.8),  # Slightly reduced dropout for middle layer
+            nn.Dropout(dropout_rate * 0.8),
             
-            # 🎯 NEW: Add intermediate layer for smoother information transition
-            nn.Linear(128, 64),  # 128 → 64 (2x reduction)
+            nn.Linear(128, 64),
             nn.BatchNorm1d(64),
             nn.ReLU(inplace=True),
-            nn.Dropout(dropout_rate * 0.7),  # Progressive dropout reduction
+            nn.Dropout(dropout_rate * 0.7),
             
-            # Final output - smooth transition from rich features to prediction
-            nn.Linear(64, 1)  # 64 → 1
+            nn.Linear(64, 1)
         )
         
-        # Initialize weights with specific attention to stability
+        # Initialize convolutional, normalization, and linear layers.
         self._initialize_weights()
     
     def _initialize_weights(self):
-        """Enhanced weight initialization for better training stability and improved gradient flow"""
+        """Initialize weights for stable 3D-CNN training."""
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
-                # More conservative initialization to prevent activation explosion
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu', a=0.05)  # Reduced from 0.1 to 0.05
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu', a=0.05)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm3d):
-                # 🔥 STABILITY FIX: Enhanced BatchNorm stabilization to prevent variance explosion
-                # Log shows variance explosion (interact.1: var=733.594, cnn_layer1.bn2: var=832.203)
-                nn.init.constant_(m.weight, 0.9)  # Even more conservative (was 0.95)
+                nn.init.constant_(m.weight, 0.9)
                 nn.init.constant_(m.bias, 0)
-                m.momentum = 0.001  # Much slower adaptation (was 0.005)
-                m.eps = 5e-3  # Larger eps for better stability (was 1e-3)
-                # Initialize running_var conservatively
+                m.momentum = 0.001
+                m.eps = 5e-3
                 if hasattr(m, 'running_var'):
-                    m.running_var.fill_(1.0)  # Initialize running_var to 1
-                    # NOTE: Let ReLU stabilize BN naturally first
+                    m.running_var.fill_(1.0)
             elif isinstance(m, nn.Linear):
-                # More conservative linear layer initialization
-                if m.weight.size(0) > 1000:  # Large linear layers (regressor)
-                    nn.init.normal_(m.weight, 0, 0.01)  # Very conservative for regressor
+                if m.weight.size(0) > 1000:
+                    nn.init.normal_(m.weight, 0, 0.01)
                 else:
-                    nn.init.xavier_normal_(m.weight, gain=0.5)  # Conservative gain
+                    nn.init.xavier_normal_(m.weight, gain=0.5)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.LayerNorm):
@@ -418,58 +372,54 @@ class AttentionCNN_2_8(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass for adsorbate-solvent interaction energy prediction
-        
-        Args:
-            x: Input voxel grid with shape (batch_size, 28, 20, 20, 20)
-        
-        Returns:
-            Predicted interaction energy (batch_size, 1)
+        Predict interaction energy from a 28-channel voxel tensor.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor with shape ``(batch_size, 28, 20, 20, 20)``.
+
+        Returns
+        -------
+        torch.Tensor
+            Predicted interaction energies with shape ``(batch_size, 1)``.
         """
             
-        # Dual-branch processing for separated adsorbate and solvent channels.
-        # Separate adsorbate and solvent channel groups
-        adsorbate_channels = x[:, :14, :, :, :]   # First 14 channels: adsorbate features
-        solvent_channels = x[:, 14:, :, :, :]     # Last 14 channels: solvent features
+        # Split the input into adsorbate and solvent channel groups.
+        adsorbate_channels = x[:, :14, :, :, :]
+        solvent_channels = x[:, 14:, :, :, :]
         
-        # Process adsorbate branch (sparse, central features)
-        adsorbate_features = self.adsorbate_processor(adsorbate_channels)  # (batch, 32, 20, 20, 20)
+        # Process the two molecular groups with separate front-end branches.
+        adsorbate_features = self.adsorbate_processor(adsorbate_channels)
         
-        # Process solvent branch (dense, distributed features)
-        solvent_features = self.solvent_processor(solvent_channels)       # (batch, 48, 20, 20, 20)
+        solvent_features = self.solvent_processor(solvent_channels)
         
-        # Natural combination without artificial weighting
-        # The architecture now balances adsorbate (32 channels) and solvent (48 channels) more evenly
-        combined_features = torch.cat([adsorbate_features, solvent_features], dim=1)  # (batch, 80, 20, 20, 20)
+        combined_features = torch.cat([adsorbate_features, solvent_features], dim=1)
         
-        # 🎯 OPTIMAL ATTENTION: Apply group-aware attention BEFORE convolution mixing
-        # This preserves the physical meaning of channel groups (32 adsorbate + 48 solvent)
-        attended_features = self.interaction_attention(combined_features)  # (batch, 80, 20, 20, 20)
+        # Apply group-aware attention before branch fusion.
+        attended_features = self.interaction_attention(combined_features)
         
-        # Model adsorbate-solvent interactions on the attended features
-        interaction_features = self.interaction_conv(attended_features)   # (batch, 48, 20, 20, 20)
+        interaction_features = self.interaction_conv(attended_features)
             
-        # Continue with the enhanced CNN backbone
-        x = interaction_features  # Start main CNN pipeline with interaction features
+        x = interaction_features
         
-        # Progressive feature learning
-        x = self.layer1(x)  # (batch, 48, 20, 20, 20) -> (batch, 64, 20, 20, 20)
-        x = self.pool1(x)  # (batch, 64, 10, 10, 10)
+        x = self.layer1(x)
+        x = self.pool1(x)
         
-        x = self.layer2(x)  # (batch, 64, 10, 10, 10) -> (batch, 80, 10, 10, 10)
-        x = self.pool2(x)  # (batch, 80, 5, 5, 5)
+        x = self.layer2(x)
+        x = self.pool2(x)
         
-        # Layer3 for deeper feature extraction
-        x = self.layer3(x)  # (batch, 56, 5, 5, 5) -> (batch, 64, 5, 5, 5)
+        x = self.layer3(x)
         
-        # Aggressive spatial compression: 5×5×5 → 2×2×2 for parameter reduction
-        x = self.adaptive_pool(x)  # (batch, 64, 2, 2, 2)
+        x = self.adaptive_pool(x)
         
-        # Flatten for regressor
-        x = x.view(x.size(0), -1)  # (batch, 64*2*2*2 = 512)
+        x = x.view(x.size(0), -1)
         
-        # Final prediction
-        x = self.regressor(x)  # (batch, 1)
+        x = self.regressor(x)
         
         return x
+
+
+# Backward-compatible alias retained for scripts that still import the legacy name.
+AttentionCNN_2_8 = AttentionCNN
     
