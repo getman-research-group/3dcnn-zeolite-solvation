@@ -37,7 +37,7 @@ Figures and interpretation analyses
 - `view_md_snapshot.py` prepares ASE visualizations of either the full system or
   a local environment centered on the adsorbate.
 - `extract_lammpsdata_info.py` extracts force-field parameters and atom-level
-  descriptors from the LAMMPS data and snapshot files.
+  features from the LAMMPS data and snapshot files.
 - `extract_hbonds.py` identifies adsorbate-solvent hydrogen bonds and assigns
   the related donor/acceptor information.
 
