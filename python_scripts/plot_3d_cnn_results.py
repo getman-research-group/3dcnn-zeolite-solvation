@@ -3125,7 +3125,7 @@ if __name__ == "__main__":
     
     
     # Generate combined parity plot with three subplots (TTA method)
-    extractor.plot_parity_plots_using_test_augment(show_plot=True,
+    extractor.plot_parity_plots_using_test_augment(show_plot=False,
                                                    save_plot=True)
     
     
