@@ -4,7 +4,9 @@ This repository accompanies the manuscript:
 
 **Predicting Solvation Thermodynamics of Adsorbates in Zeolite Pores Using Convolutional Neural Networks with Attention Mechanisms**
 
-The repository contains the data, scripts, trained models, example molecular simulation files, and generated figures used to support the manuscript.
+The repository contains energy tables, data-processing and modeling scripts,
+trained model checkpoints, representative molecular-simulation files, and the
+analysis outputs used to support the manuscript.
 
 ![Workflow overview](overall_workflow.png)
 
@@ -15,18 +17,24 @@ The repository contains the data, scripts, trained models, example molecular sim
 ```text
 3dcnn-zeolite-solvation/
 ├── python_scripts/          # Data processing, voxelization, training, evaluation, and plotting scripts
-├── database/                # Energy tables and source data used by the training scripts
-├── dataset_cnn/             # Voxel-grid datasets used as model inputs
+├── database/                # Clean DFT interaction-energy tables
+├── dataset_cnn/             # Voxel-dataset configuration and regeneration instructions
 ├── output_model_cnn/        # Trained model checkpoints and training records
 ├── output_figures/          # Figures and visualization outputs generated from the analysis
-├── md_simulations/          # Representative MD and DFT input/output files
+├── md_simulations/          # Representative LAMMPS and CP2K simulation files
 ├── overall_workflow.png     # Workflow overview figure
 ├── environment.yml          # Conda environment for local data processing and analysis
 ├── LICENSE
 └── README.md
 ```
 
-The `md_simulations/` directory includes representative LAMMPS and CP2K input files needed to document the molecular simulation setup used in the manuscript. The `database/` and `dataset_cnn/` directories provide the energy labels and voxelized molecular configurations used by the machine-learning workflow.
+The `md_simulations/` directory documents the molecular-simulation setup with
+representative LAMMPS and CP2K files. The `database/` directory contains the
+energy labels used for model training. Generated voxel pickle files are not
+versioned because each file exceeds GitHub's 100 MB limit; the corresponding
+configuration and regeneration command are provided in `dataset_cnn/`.
+See [`python_scripts/README.md`](python_scripts/README.md) for script roles and
+[`dataset_cnn/`](dataset_cnn/) for the example voxel configuration.
 
 ## Installation
 
@@ -49,10 +57,14 @@ This environment reproduces the CPU-compatible setup used for local data process
 
 Run commands from the repository root.
 
-Generate voxel-grid datasets from simulation files:
+Generate the representative serialized voxel dataset:
 
 ```bash
-python python_scripts/generate_voxel_grids.py
+python python_scripts/store_grids_pickle.py \
+  --test \
+  --zeolite FAU \
+  --environment methanol_240_water_960-hydrophilic \
+  --adsorbate 02_01_02_propanol
 ```
 
 Train the 3D-CNN model:
@@ -61,25 +73,41 @@ Train the 3D-CNN model:
 python python_scripts/train_3d_cnn.py
 ```
 
-Generate parity plots and related analysis figures:
+Full cross-validation training requires the complete locally generated voxel
+dataset; the representative example is intended to verify preprocessing and
+data loading.
+
+Generate the model-performance, training-history, attention, and spatial
+attribution figures:
 
 ```bash
 python python_scripts/plot_3d_cnn_results.py
+python python_scripts/plot_training_info.py
+python python_scripts/plot_attention_results.py
+python python_scripts/plot_importance_spatial.py
 ```
 
-Some scripts contain path and run-configuration variables near the top of the file. Update those paths if the repository is moved or if a subset of the data is being analyzed.
+Sample- and model-specific settings for the analysis scripts are defined in
+their main blocks. Repository paths are resolved by `python_scripts/core/path.py`
+and can be overridden with the `ZEOLITE_SOLVATION_PATH` environment variable.
 
 ## Reproducing the Manuscript Workflow
 
 The main workflow is:
 
 1. Prepare energy-label tables in `database/`.
-2. Convert representative MD snapshots in `md_simulations/` into voxel-grid datasets in `dataset_cnn/`.
-3. Train and evaluate the 3D-CNN models using scripts in `python_scripts/`.
-4. Save trained checkpoints to `output_model_cnn/`.
-5. Generate manuscript and supporting-information figures in `output_figures/`.
+2. Extract molecular descriptors and hydrogen-bond information from the MD
+   configurations, then generate and augment the voxel representations.
+3. Serialize the voxel grids to `dataset_cnn/` with
+   `store_grids_pickle.py`.
+4. Train and evaluate the 3D-CNN models using scripts in `python_scripts/`.
+5. Save trained checkpoints to `output_model_cnn/` and generate manuscript
+   and Supporting Information figures in `output_figures/`.
 
-The uploaded data include a clean energy table, representative voxelized systems, trained model checkpoints, and example LAMMPS and CP2K input files so that the key data-processing, model-training, and analysis steps can be reproduced.
+The repository includes clean energy tables, trained fold checkpoints, and
+representative LAMMPS and CP2K files. Large generated voxel datasets and full
+trajectory collections must be regenerated locally or distributed through an
+external data archive.
 
 ## Citation
 
