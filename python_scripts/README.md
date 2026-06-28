@@ -1,7 +1,8 @@
 # Python Scripts
 
-This directory contains the data-processing, voxel-generation, model-training,
-evaluation, and visualization scripts used in the study.
+This directory contains the scripts used to process the molecular-simulation
+data, build voxel datasets, train the 3D-CNN models, and generate the figures
+and interpretation analyses reported in the study.
 
 ## Workflow
 
@@ -27,18 +28,18 @@ Figures and interpretation analyses
   environments. The repository location can also be supplied through the
   `ZEOLITE_SOLVATION_PATH` environment variable.
 - `core/global_vars.py` defines the systems, adsorbates, energy-table names,
-  and molecular features shared by the workflow.
+  and molecular features used consistently throughout the workflow.
 
 ## MD Processing and Molecular Features
 
-- `read_md_snapshot.py` combines a LAMMPS topology file with one sampled MD
+- `read_md_snapshot.py` combines a LAMMPS topology file with a sampled MD
   configuration and returns an annotated MDAnalysis universe.
 - `view_md_snapshot.py` prepares ASE visualizations of either the full system or
   a local environment centered on the adsorbate.
-- `extract_lammpsdata_info.py` extracts force-field and atom-level descriptors
-  from the LAMMPS data and snapshot files.
-- `extract_hbonds.py` identifies adsorbate-solvent hydrogen bonds and related
-  donor/acceptor information.
+- `extract_lammpsdata_info.py` extracts force-field parameters and atom-level
+  descriptors from the LAMMPS data and snapshot files.
+- `extract_hbonds.py` identifies adsorbate-solvent hydrogen bonds and assigns
+  the related donor/acceptor information.
 
 ## Voxel Dataset Preparation
 
@@ -47,9 +48,9 @@ Figures and interpretation analyses
   `database/`.
 - `augment_voxel_grids.py` applies the rotational data augmentation used for
   the voxelized configurations.
-- `store_grids_pickle.py` generates and serializes complete voxel datasets to
-  `dataset_cnn/`.
-- `load_grids_pickle.py` loads the serialized grids and verifies their metadata,
+- `store_grids_pickle.py` generates complete voxel datasets and serializes them
+  to `dataset_cnn/`.
+- `load_grids_pickle.py` loads the serialized grids and checks their metadata,
   dimensions, labels, and completeness before model training.
 
 ## Model Training
@@ -65,8 +66,8 @@ Figures and interpretation analyses
 ## Analysis and Visualization
 
 - `plot_data_distribution.py` summarizes the DFT energy labels and MD sampling
-  distributions. It generates the manuscript data-distribution figure and
-  additional diagnostic plots.
+  distributions. It generates the manuscript data-distribution figure together
+  with additional diagnostic plots.
 - `plot_3d_cnn_results.py` extracts cross-validation predictions and metrics and
   generates model-performance figures.
 - `plot_training_info.py` visualizes losses, learning behavior, and training
@@ -90,6 +91,6 @@ python python_scripts/test_pytorch.py --skip-benchmark
 ```
 
 `test_pytorch.sh` provides a portable local or Slurm launcher for the same test.
-The individual research scripts also contain example parameters or control
-settings in their main blocks; review these settings before processing a new
-system or launching a complete dataset run.
+Several research scripts also include example parameters or control settings in
+their main blocks; review these settings before processing a new system or
+launching a complete dataset run.
