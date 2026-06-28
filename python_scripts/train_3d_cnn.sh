@@ -20,7 +20,7 @@
 # Default values - Updated for CNN model training
 MODE="full"
 TEST_MODE="false"
-MODEL_FILE="train_3d_cnn_2_8"    # Default model file to execute (updated version with split-type support)
+MODEL_FILE="train_3d_cnn"    # Default model file to execute (updated version with split-type support)
 EPOCHS=100
 BATCH_SIZE=32
 LEARNING_RATE=0.001
@@ -253,7 +253,7 @@ case $MODE in
         echo "  Example: sbatch train_3d_cnn.sh full 100 32 0.001 42"
         echo ""
         echo "  Named parameters: sbatch train_3d_cnn.sh [param=value] ..."
-        echo "  Example: sbatch train_3d_cnn.sh model-file=train_3d_cnn_2_8 epochs=100 batch-size=16 split-type=solvent_split"
+        echo "  Example: sbatch train_3d_cnn.sh model-file=train_3d_cnn epochs=100 batch-size=16 split-type=solvent_split"
         echo ""
         echo "Split-type examples:"
         echo "  random_split (5-fold):      sbatch train_3d_cnn.sh full split-type=random_split"
