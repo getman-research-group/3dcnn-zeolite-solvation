@@ -97,26 +97,12 @@ The main workflow is:
 3. Serialize the voxel grids to `dataset_cnn/` with
    `store_grids_pickle.py`.
 4. Train and evaluate the 3D-CNN models using scripts in `python_scripts/`.
-5. Save trained checkpoints to `output_model_cnn/` and generate manuscript
-   and Supporting Information figures in `output_figures/`.
+5. Save trained checkpoints to `output_model_cnn/` and generate figures in `output_figures/`.
 
 The repository includes clean energy tables, trained fold checkpoints, and
 representative LAMMPS and CP2K files. Large generated voxel datasets and full
 trajectory collections must be regenerated locally or distributed through an
 external data archive.
-
-## Citation
-
-If you use this repository, please cite the accompanying manuscript:
-
-```bibtex
-@article{shi_zeolite_3dcnn,
-  title = {Predicting Solvation Thermodynamics of Adsorbates in Zeolite Pores Using Convolutional Neural Networks with Attention Mechanisms},
-  author = {Shi, Jiexin and Chen, Xiuting and Getman, Rachel B.},
-  journal = {Journal of Chemical Information and Modeling},
-  note = {Manuscript submitted}
-}
-```
 
 ## License
 
