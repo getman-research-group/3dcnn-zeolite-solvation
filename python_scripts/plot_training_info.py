@@ -1884,9 +1884,9 @@ if __name__ == "__main__":
                                       show_plot=False,
                                       save_plot=True)
     
-    # # Performance metrics comparison
-    # print("\n1️⃣ Generating performance metrics plot...")
-    # plotter.plot_performance_metrics()
+    # Performance metrics comparison
+    print("\n1️⃣ Generating performance metrics plot...")
+    plotter.plot_performance_metrics()
     
     # # Training loss curves
     # print("\n2️⃣ Generating training loss curves...")
@@ -1907,17 +1907,17 @@ if __name__ == "__main__":
     # print("\n8️⃣ Comprehensive training analysis and hyperparameter suggestions...")
     # plotter.analyze_training_and_suggest_hyperparameters()
     
-    # Generate publication-ready plots
-    print("\n9️⃣ Generating publication-ready training info plots...")
-    plotter.plot_training_info_publish(loss_y_max=1.5,
-                                       loss_y_min=-0.05,
-                                       train_loss_start_epoch=0,
-                                       val_loss_start_epoch=8,
-                                       gradient_y=3,
-                                       gradient_start_epoch=2,
-                                       show_best_epoch=False,
-                                       plot_raw_training_loss=True,
-                                       convert_to_original_scale=False,
-                                       smooth_val_loss=True,
-                                       smooth_window=5,
-                                       )
+    # # Generate publication-ready plots
+    # print("\n9️⃣ Generating publication-ready training info plots...")
+    # plotter.plot_training_info_publish(loss_y_max=1.5,
+    #                                    loss_y_min=-0.05,
+    #                                    train_loss_start_epoch=0,
+    #                                    val_loss_start_epoch=8,
+    #                                    gradient_y=3,
+    #                                    gradient_start_epoch=2,
+    #                                    show_best_epoch=False,
+    #                                    plot_raw_training_loss=True,
+    #                                    convert_to_original_scale=False,
+    #                                    smooth_val_loss=True,
+    #                                    smooth_window=5,
+    #                                    )
