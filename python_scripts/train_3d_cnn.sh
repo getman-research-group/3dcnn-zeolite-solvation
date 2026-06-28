@@ -82,7 +82,7 @@ for arg in "$@"; do
 done
 
 # Extract model name from model file for naming purposes
-# Convert train_3d_cnn_2_7 -> model_2_7, etc.
+# Convert train_3d_cnn -> model, etc.
 if [[ "$MODEL_FILE" =~ train_3d_cnn_(.+)$ ]]; then
     MODEL_NAME="model_${BASH_REMATCH[1]}"
 else
@@ -246,7 +246,7 @@ case $MODE in
         echo "  custom   - Custom training with specified parameters"
         echo ""
         echo "Model File Selection:"
-        echo "  model-file=train_3d_cnn_2_7 - Use train_3d_cnn_2_7.py training script (default, cleaned CNN)"
+        echo "  model-file=train_3d_cnn - Use train_3d_cnn.py training script (default, cleaned CNN)"
         echo ""
         echo "Usage examples:"
         echo "  Positional: sbatch train_3d_cnn.sh [MODE] [EPOCHS] [BATCH_SIZE] [LEARNING_RATE] [RANDOM_STATE]"
@@ -318,9 +318,9 @@ exit $PYTHON_EXIT_CODE
 # 3D CNN MODEL TRAINING USAGE EXAMPLES FOR CLUSTER SUBMISSION
 # =================================================================================
 #
-# 1. Default CNN Model (train_3d_cnn_2_7) - Full Dataset Training:
-#    sbatch train_3d_cnn.sh model-file=train_3d_cnn_2_7 epochs=100 batch-size=32 learning-rate=0.001
-#    Output files: model_2_7_JOBID.log, model_2_7_JOBID.err, model_2_7_JOBID_*.pth, model_2_7_JOBID_*.pkl
+# 1. Default CNN Model (train_3d_cnn) - Full Dataset Training:
+#    sbatch train_3d_cnn.sh model-file=train_3d_cnn epochs=100 batch-size=32 learning-rate=0.001
+#    Output files: model_JOBID.log, model_JOBID.err, model_JOBID_*.pth, model_JOBID_*.pkl
 #
 # 2. Quick Test Mode:
 #    sbatch train_3d_cnn.sh test
