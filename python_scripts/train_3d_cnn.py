@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-train_3d_cnn_2_8.py
+train_3d_cnn.py
 Train the attention-enhanced 3D CNN on 28-channel voxel grids.
 Features:
 - Load separated-channel voxel data (14 adsorbate + 14 solvent features)
@@ -35,7 +35,7 @@ from core.global_vars import ZEOLITE_TYPES, ADSORBATES_BY_ENV
 from load_grids_pickle import VoxelGridsLoader
 
 # Import model architecture
-from model_3d_cnn import AttentionCNN_2_8
+from model_3d_cnn import AttentionCNN
 
 
 
@@ -237,7 +237,7 @@ class CNN3DTrainer:
             print(f"    Using {len(feature_names)} feature names from loaded data: {feature_names}")
         
         # Construct the model for separated adsorbate and solvent channels.
-        model = AttentionCNN_2_8(
+        model = AttentionCNN(
             in_channels=28, 
             dropout_rate=dropout_rate,
             feature_names=feature_names
@@ -651,7 +651,7 @@ class CNN3DTrainer:
             if feature_names is None and self.verbose:
                 print("    ⚠️  Warning: Feature names not available, using None for model reconstruction")
             
-            model = AttentionCNN_2_8(
+            model = AttentionCNN(
                 in_channels=28,
                 dropout_rate=model_config.get('dropout_rate', 0.25),
                 feature_names=feature_names
@@ -2776,8 +2776,8 @@ def parse_arguments():
     parser.add_argument('--random-state', type=int, default=42,
                        help='Random seed for reproducible cross-validation splits')
     
-    # Output file prefix argument - hardcoded for train_3d_cnn_2_8.py
-    parser.add_argument('--output-prefix', type=str, default='model_2_8',
+    # Output file prefix argument - hardcoded for train_3d_cnn.py
+    parser.add_argument('--output-prefix', type=str, default='model',
                        help='Prefix for output files (e.g., model checkpoints, CSV files). Defaults to "model_2_1"')
     
     return parser.parse_args()
