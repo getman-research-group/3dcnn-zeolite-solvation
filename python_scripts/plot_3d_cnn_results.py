@@ -1844,27 +1844,25 @@ if __name__ == "__main__":
                                       point_size_deltaEint=50,)
     
     
-    # # Generate SI Figure S5.4: TTA comparison analysis for the 3D CNN model
-    # extractor.plot_parity_plots_using_test_augment(show_plot=False,
-    #                                                save_plot=True)
+    # Generate Manuscript parity plot with three subplots including MD comparison
+    extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
+        linear_fit=True,
+        confidence_band=True,
+        shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
+        show_plot=False,
+        save_plot=True,
+        ml_slope_x=0.15,
+        ml_slope_y=0.02,
+        md_slope_x=0.04,
+        md_slope_y=0.53
+    )
     
     
-    # # Generate Manuscript parity plot with three subplots including MD comparison
-    # extractor.plot_parity_plot_no_test_augment_with_Train_with_MD_3_subfigures_vertical(
-    #     linear_fit=True,
-    #     confidence_band=True,
-    #     shade='confidence_interval',  # Options: 'confidence_interval' or 'prediction_interval'
-    #     show_plot=False,
-    #     save_plot=True,
-    #     ml_slope_x=0.15,
-    #     ml_slope_y=0.02,
-    #     md_slope_x=0.04,
-    #     md_slope_y=0.53
-    # )
-    
-    
-    # # Generate comprehensive performance bar plot (no TTA)
-    # extractor.plot_bar_plot_performance_no_test_augment(show_plot=False,
-    #                                                     save_plot=True)
+    # Generate SI Figure S5.1: comprehensive performance bar plot
+    extractor.plot_bar_plot_performance_no_test_augment(show_plot=False,
+                                                        save_plot=True)
 
 
+    # Generate SI Figure S5.4: TTA comparison analysis for the 3D CNN model
+    extractor.plot_parity_plots_using_test_augment(show_plot=False,
+                                                   save_plot=True)
