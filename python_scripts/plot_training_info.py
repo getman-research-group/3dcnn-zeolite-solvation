@@ -1,10 +1,37 @@
 # -*- coding: utf-8 -*-
-"""Generate the publication training-history figure for the 3D-CNN model.
+"""Generate the publication-ready training-history figure for the 3D-CNN.
 
-The script reads the cross-validation result pickle produced by
-``train_3d_cnn.py`` and creates a two-panel figure containing the mean training
-and validation loss histories and the mean gradient-norm history. Shaded bands
-show one standard deviation across folds.
+This script reads the cross-validation results pickle produced by
+``train_3d_cnn.py``. For every available fold, it extracts the stored training
+loss, validation loss, gradient-norm history, and target-scaler information.
+The result pickle is loaded with a CPU-safe unpickler so that files containing
+PyTorch tensors can be analyzed on a machine without the original GPU device.
+
+The ``plot_training_info_publish`` method generates a two-panel figure:
+
+1. Mean training and validation loss across folds, with shaded bands showing
+   one standard deviation between folds. Stored MSE values can be displayed
+   directly or converted to RMSE; fold-specific target scalers can optionally
+   restore the original energy unit (eV).
+2. Mean gradient norm across folds, again with a one-standard-deviation band,
+   to summarize the optimization behavior during training.
+
+The plotting interface provides optional epoch trimming, validation-curve
+smoothing, axis limits, best-epoch marking, and standardized/original-scale
+display controls. Running this file directly loads ``output_model_cnn/model.pkl``
+and writes the figure to ``output_figures/cnn_training_results/``.
+
+Main components
+---------------
+``EnhancedTrainingPlotter``
+    Resolves repository paths, loads the stored fold histories, and manages
+    figure output settings.
+``load_model_data``
+    Reads the result pickle and retains only the fields required by the
+    publication plot.
+``plot_training_info_publish``
+    Aggregates the histories across folds and generates the final two-panel
+    training-information figure.
 """
 
 import io
