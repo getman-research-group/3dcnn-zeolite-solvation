@@ -3049,8 +3049,7 @@ if __name__ == "__main__":
 
 
     # 5-fold CV: tests general molecular interactions
-    pkl_name = "model-2546220-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.088
-    # pkl_name = "model-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083 # Best
+    pkl_name = "model-2546229-epochs_200-bs_32-lr_0.0002-grid_16.0_0.8.pkl" # Test MAE 0.083
 
         
 
